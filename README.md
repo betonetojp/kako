@@ -13,4 +13,4 @@ Tiny nostr summary bot client for windows.
 - botのnsecはnostterをシークレットウィンドウで開くと手軽に作成できます。
 - 「Reply commands」は改行で複数のコマンドを設定できます。
 - F5キーで開くGemini画面でbotに投稿させずにまとめのテストやbotとのチャットを行うことができます。
-- reset と投稿すると次回まとめ投稿前にModelとInitial promptを再読み込みします。（Initializedチェックボックスを外します）
+- reset と投稿すると「Initialized」を外し、次回まとめ投稿前に「Model」と「Initial prompt」を再読み込みします。
