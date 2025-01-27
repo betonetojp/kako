@@ -254,7 +254,6 @@
         private TextBox textBoxApiKey;
         private Button buttonSummarize;
         private Button buttonChat;
-        private CheckBox checkBoxInitialized;
         private Label label2;
         private TextBox textBoxPrompt;
         private TextBox textBoxPromptForEveryMessage;
@@ -266,5 +265,6 @@
         private Label label5;
         internal TextBox textBoxAnswer;
         internal TextBox textBoxChat;
+        internal CheckBox checkBoxInitialized;
     }
 }

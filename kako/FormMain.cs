@@ -392,6 +392,13 @@ namespace kako
                                 if (nostrEvent.PublicKey == whoToNotify)
                                 {
                                     // 通知有効コマンド
+                                    if (content == "reset")
+                                    {
+                                        await PostAsync("AIをリセットしました", nostrEvent);
+                                        _formAI.checkBoxInitialized.Checked = false;
+                                    }
+
+                                    // 通知有効コマンド
                                     //var commands = _replyCommands.Split(["\r\n"], StringSplitOptions.RemoveEmptyEntries);
                                     if (_replyCommands.Contains(content))
                                     {
@@ -400,13 +407,16 @@ namespace kako
                                             LastCreatedAt = DateTimeOffset.MinValue;
                                             LatestCreatedAt = DateTimeOffset.MinValue;
                                         }
-                                        await _formAI.SummarizeNotesAsync();
+                                        //await _formAI.SummarizeNotesAsync();
+                                        bool success = await _formAI.SummarizeNotesAsync();
                                         await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
-
-                                        dataGridViewNotes.Rows.Clear();
-                                        GC.Collect();
-                                        GC.WaitForPendingFinalizers();
-                                        continue;
+                                        if (success)
+                                        {
+                                            dataGridViewNotes.Rows.Clear();
+                                            GC.Collect();
+                                            GC.WaitForPendingFinalizers();
+                                            continue;
+                                        }
                                     }
                                 }
 

@@ -43,17 +43,22 @@ namespace kako
             await SendMessageAsync(textBoxChat.Text);
         }
 
-        internal async Task SummarizeNotesAsync()
+        internal async Task<bool> SummarizeNotesAsync()
         {
             textBoxAnswer.Text = string.Empty;
 
             var apiKey = textBoxApiKey.Text;
 
+            bool success = false;
             if (MainForm != null)
             {
-                var notesContent = MainForm.GetNotesContent();
+                if (!IsInitialized)
+                {
+                    _model = null;
+                }
                 InitializeModel(apiKey);
 
+                var notesContent = MainForm.GetNotesContent();
                 if (!IsInitialized)
                 {
                     _chat = _model?.StartChat(new StartChatParams());
@@ -68,6 +73,7 @@ namespace kako
                     try
                     {
                         result = await _chat.SendMessageAsync(textBoxPromptForEveryMessage.Text + notesContent);
+                        success = true;
                     }
                     catch (Exception ex)
                     {
@@ -79,12 +85,18 @@ namespace kako
                     }
                 }
             }
+            return success;
         }
-        internal async Task SendMessageAsync(string message)
+        internal async Task<bool> SendMessageAsync(string message)
         {
             textBoxAnswer.Text = string.Empty;
 
             var apiKey = textBoxApiKey.Text;
+
+            if (!IsInitialized)
+            {
+                _model = null;
+            }
             InitializeModel(apiKey);
 
             if (!IsInitialized)
@@ -92,12 +104,14 @@ namespace kako
                 _chat = _model?.StartChat(new StartChatParams());
             }
 
+            bool success = false;
             if (_chat != null)
             {
                 string? result = null;
                 try
                 {
                     result = await _chat.SendMessageAsync(message);
+                    success = true;
                 }
                 catch (Exception ex)
                 {
@@ -110,6 +124,7 @@ namespace kako
                     textBoxChat.Focus();
                 }
             }
+            return success;
         }
 
         private void InitializeModel(string apiKey)
@@ -123,8 +138,8 @@ namespace kako
             if (result == null)
             {
                 textBoxAnswer.Text = "電波が悪いみたいです。";
-                IsInitialized = false;
-                checkBoxInitialized.Checked = IsInitialized;
+                //IsInitialized = false;
+                //checkBoxInitialized.Checked = IsInitialized;
             }
             else
             {
