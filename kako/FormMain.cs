@@ -394,7 +394,7 @@ namespace kako
                                     // 通知有効コマンド
                                     if (content == "reset")
                                     {
-                                        await PostAsync("AIをリセットしました", nostrEvent);
+                                        await PostAsync("AIをリセットしました。", nostrEvent);
                                         _formAI.checkBoxInitialized.Checked = false;
                                     }
 
