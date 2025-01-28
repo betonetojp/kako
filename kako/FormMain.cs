@@ -399,7 +399,6 @@ namespace kako
                                     }
 
                                     // 通知有効コマンド
-                                    //var commands = _replyCommands.Split(["\r\n"], StringSplitOptions.RemoveEmptyEntries);
                                     if (_replyCommands.Contains(content))
                                     {
                                         if (!_formAI.IsInitialized)
@@ -407,7 +406,6 @@ namespace kako
                                             LastCreatedAt = DateTimeOffset.MinValue;
                                             LatestCreatedAt = DateTimeOffset.MinValue;
                                         }
-                                        //await _formAI.SummarizeNotesAsync();
                                         bool success = await _formAI.SummarizeNotesAsync();
                                         await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
                                         if (success)
@@ -418,6 +416,25 @@ namespace kako
                                             continue;
                                         }
                                     }
+
+                                    // 返信された時
+                                    var replyTags = nostrEvent.GetTaggedData("p");
+                                    if (replyTags != null && 0 < replyTags.Length)
+                                    {
+                                        // 返信先の公開鍵を取得
+                                        string replyTo = replyTags[0];
+                                        if (replyTo.Equals(_npubHex))
+                                        {
+                                            // 返信先が自分の時
+                                            _formAI.textBoxChat.Text = content;
+                                            bool success = await _formAI.SendMessageAsync(content);
+                                            if (success)
+                                            {
+                                                await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
+                                            }
+                                        }
+                                    }
+
                                 }
 
                             }
