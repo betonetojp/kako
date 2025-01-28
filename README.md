@@ -8,6 +8,7 @@ Tiny nostr summary bot client for windows.
 - 「Private key」にbotのNostr秘密鍵（nsec1...）を入力してください。
 - 「Reply commands」にbotが反応するコマンドを入力してください。
 - 「Reply commands」に設定したコマンドを投稿すると、botが前回実施以降のタイムラインのまとめを投稿します。
+- 返信するとGeminiに「Chat」を送信し、結果を返信投稿します。
 
 ## Tips
 - botのnsecはnostterをシークレットウィンドウで開くと手軽に作成できます。
