@@ -391,14 +391,14 @@ namespace kako
                                 whoToNotify = _director.ConvertToHex();
                                 if (nostrEvent.PublicKey == whoToNotify)
                                 {
-                                    // 通知有効コマンド
+                                    // リセットコマンド
                                     if (content == "reset")
                                     {
                                         await PostAsync("AIをリセットしました。", nostrEvent);
                                         _formAI.checkBoxInitialized.Checked = false;
                                     }
 
-                                    // 通知有効コマンド
+                                    // まとめコマンド
                                     if (_replyCommands.Contains(content))
                                     {
                                         if (!_formAI.IsInitialized)

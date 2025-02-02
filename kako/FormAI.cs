@@ -138,8 +138,8 @@ namespace kako
             if (result == null)
             {
                 textBoxAnswer.Text = "電波が悪いみたいです。";
-                //IsInitialized = false;
-                //checkBoxInitialized.Checked = IsInitialized;
+                IsInitialized = false;
+                checkBoxInitialized.Checked = IsInitialized;
             }
             else
             {
