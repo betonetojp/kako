@@ -61,6 +61,7 @@ namespace kako
 
         private List<Client> _clients = [];
 
+        private System.Threading.Timer? _dailyTimer;
         private bool _reallyClose = false;
         private static Mutex? _mutex;
 
@@ -138,7 +139,9 @@ namespace kako
 
             _formManiacs.MainForm = this;
             _formAI.MainForm = this;
-            //_formAI.Show(this);
+
+            // タイマーの初期化
+            SetDailyTimer();
         }
         #endregion
 
@@ -1016,6 +1019,9 @@ namespace kako
                 Setting.Save(_configPath);
                 Tools.SaveUsers(Users);
 
+                _dailyTimer?.Change(Timeout.Infinite, 0);
+                _dailyTimer?.Dispose();
+
                 Application.Exit();
             }
         }
@@ -1330,6 +1336,7 @@ namespace kako
         }
         #endregion
 
+        #region ノート取得
         public string GetNotesContent()
         {
             var notes = new StringBuilder();
@@ -1379,5 +1386,78 @@ namespace kako
 
             return notes.ToString();
         }
+        #endregion
+
+        #region デイリータイマー
+        // デイリータイマーの設定を毎時に変更
+        private void SetDailyTimer()
+        {
+            var now = DateTime.Now;
+            var nextTrigger = new DateTime(now.Year, now.Month, now.Day, now.Hour, 50, 0);
+            if (now.Minute >= 55)
+            {
+                nextTrigger = nextTrigger.AddHours(1);
+            }
+            TimeSpan timeToGo = nextTrigger - now;
+            _dailyTimer?.Dispose();
+            _dailyTimer = new System.Threading.Timer(DailyTimerCallback, null, timeToGo, TimeSpan.FromHours(1));
+        }
+
+        // デイリータイマーのコールバック
+        private async void DailyTimerCallback(object? state)
+        {
+            if (NostrAccess.Clients == null)
+            {
+                return;
+            }
+
+            try
+            {
+                labelRelays.Invoke((MethodInvoker)(() => labelRelays.Text = "Reconnecting..."));
+
+                await NostrAccess.Clients.Disconnect();
+                await NostrAccess.ConnectAsync();
+                await NostrAccess.SubscribeAsync();
+
+                // ログイン済みの時
+                if (!string.IsNullOrEmpty(_npubHex))
+                {
+                    // フォロイーを購読する
+                    await NostrAccess.SubscribeFollowsAsync(_npubHex);
+                }
+
+                labelRelays.Invoke((MethodInvoker)(() => labelRelays.Text = "Reconnected successfully."));
+
+                // 投稿後に labelRelays.Text と toolTipRelays を元に戻す
+                labelRelays.Invoke((MethodInvoker)(() =>
+                {
+                    int relayCount = NostrAccess.Relays.Length;
+
+                    toolTipRelays.SetToolTip(labelRelays, string.Join("\n", NostrAccess.RelayStatusList));
+
+                    switch (relayCount)
+                    {
+                        case 0:
+                            labelRelays.Text = "No relay enabled.";
+                            break;
+                        case 1:
+                            labelRelays.Text = $"{NostrAccess.Relays.Length} relay";
+                            break;
+                        default:
+                            labelRelays.Text = $"{NostrAccess.Relays.Length} relays";
+                            break;
+                    }
+                }));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                labelRelays.Invoke((MethodInvoker)(() => labelRelays.Text = "Reconnection failed."));
+                MessageBox.Show($"再接続に失敗しました: {ex.Message}", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            // タイマーは毎時実行されるので再設定は不要
+        }
+        #endregion
     }
 }
