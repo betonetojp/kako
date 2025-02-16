@@ -26,6 +26,8 @@ namespace kako
             public bool AddClient { get; set; } = true;
             public string Director { get; set; } = string.Empty;
             public List<string> ReplyCommands { get; set; } = [];
+            public bool MentionEveryHour { get; set; } = false;
+            public int MentionMinutes { get; set; } = 0;
 
             public string GridColor { get; set; } = "#FF1493";
             public string ReactionColor { get; set; } = "#FFFFE0";
@@ -85,6 +87,16 @@ namespace kako
         {
             get => _data.ReplyCommands;
             set => _data.ReplyCommands = value;
+        }
+        public static bool MentionEveryHour
+        {
+            get => _data.MentionEveryHour;
+            set => _data.MentionEveryHour = value;
+        }
+        public static int MentionMinutes
+        {
+            get => _data.MentionMinutes;
+            set => _data.MentionMinutes = value;
         }
 
         public static string GridColor

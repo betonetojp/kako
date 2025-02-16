@@ -51,6 +51,8 @@ namespace kako
         private bool _addClient;
         private string _director = string.Empty;
         private List<string> _replyCommands = [];
+        private bool _mentionEveryHour;
+        private int _mentionMinutes;
 
         private double _tempOpacity = 1.00;
 
@@ -132,6 +134,8 @@ namespace kako
             _addClient = Setting.AddClient;
             _director = Setting.Director;
             _replyCommands = Setting.ReplyCommands;
+            _mentionEveryHour = Setting.MentionEveryHour;
+            _mentionMinutes = Setting.MentionMinutes;
 
             dataGridViewNotes.Columns["name"].Width = Setting.NameColumnWidth;
             dataGridViewNotes.GridColor = Tools.HexToColor(Setting.GridColor);
@@ -676,6 +680,48 @@ namespace kako
                 labelRelays.Text = "Decryption failed.";
             }
         }
+
+        private async Task MentionAsync(string content)
+        {
+            if (NostrAccess.Clients == null)
+            {
+                return;
+            }
+            // create tags
+            List<NostrEventTag> tags = [];
+            tags.Add(new NostrEventTag() { TagIdentifier = "p", Data = [_director.ConvertToHex()] });
+
+            if (_addClient)
+            {
+                tags.Add(new NostrEventTag()
+                {
+                    TagIdentifier = "client",
+                    Data = ["kako"]
+                });
+            }
+            // create a new event
+            var newEvent = new NostrEvent()
+            {
+                Kind = 1,
+                Content = content.Replace("\r\n", "\n"),
+                Tags = tags
+            };
+
+            try
+            {
+                // load from an nsec string
+                var key = _nsec.FromNIP19Nsec();
+                // sign the event
+                await newEvent.ComputeIdAndSignAsync(key);
+                // send the event
+                await NostrAccess.Clients.SendEventsAndWaitUntilReceived([newEvent], CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                labelRelays.Text = "Decryption failed.";
+            }
+        }
         #endregion
 
         #region リアクション処理
@@ -789,6 +835,8 @@ namespace kako
             _formSetting.checkBoxAddClient.Checked = _addClient;
             _formSetting.textBoxDirector.Text = _director;
             _formSetting.textBoxReplyCommands.Text = string.Join("\r\n", _replyCommands);
+            _formSetting.checkBoxMentionEveryHour.Checked = _mentionEveryHour;
+            _formSetting.numericUpDownMentionMinutes.Value = _mentionMinutes;
             _formSetting.textBoxNsec.Text = _nsec;
             _formSetting.textBoxNpub.Text = _nsec.GetNpub();
 
@@ -806,6 +854,9 @@ namespace kako
             _addClient = _formSetting.checkBoxAddClient.Checked;
             _director = _formSetting.textBoxDirector.Text;
             _replyCommands = [.. _formSetting.textBoxReplyCommands.Text.Split(["\r\n"], StringSplitOptions.RemoveEmptyEntries)];
+            _mentionEveryHour = _formSetting.checkBoxMentionEveryHour.Checked;
+            _mentionMinutes = (int)_formSetting.numericUpDownMentionMinutes.Value;
+            SetDailyTimer();
             try
             {
                 // 別アカウントログイン失敗に備えてクリアしておく
@@ -866,6 +917,8 @@ namespace kako
             Setting.AddClient = _addClient;
             Setting.Director = _director;
             Setting.ReplyCommands = _replyCommands;
+            Setting.MentionEveryHour = _mentionEveryHour;
+            Setting.MentionMinutes = _mentionMinutes;
 
             Setting.Save(_configPath);
             _clients = Tools.LoadClients();
@@ -1393,8 +1446,8 @@ namespace kako
         private void SetDailyTimer()
         {
             var now = DateTime.Now;
-            var nextTrigger = new DateTime(now.Year, now.Month, now.Day, now.Hour, 50, 0);
-            if (now.Minute >= 55)
+            var nextTrigger = new DateTime(now.Year, now.Month, now.Day, now.Hour, _mentionMinutes, 0);
+            if (now.Minute >= _mentionMinutes)
             {
                 nextTrigger = nextTrigger.AddHours(1);
             }
@@ -1427,6 +1480,24 @@ namespace kako
                 }
 
                 labelRelays.Invoke((MethodInvoker)(() => labelRelays.Text = "Reconnected successfully."));
+
+                // 定時まとめメンション
+                if (_mentionEveryHour)
+                {
+                    if (!_formAI.IsInitialized)
+                    {
+                        LastCreatedAt = DateTimeOffset.MinValue;
+                        LatestCreatedAt = DateTimeOffset.MinValue;
+                    }
+                    bool success = await _formAI.SummarizeNotesAsync();
+                    await MentionAsync(_formAI.textBoxAnswer.Text);
+                    if (success)
+                    {
+                        dataGridViewNotes.Invoke((MethodInvoker)(() => dataGridViewNotes.Rows.Clear()));
+                        GC.Collect();
+                        GC.WaitForPendingFinalizers();
+                    }
+                }
 
                 // 投稿後に labelRelays.Text と toolTipRelays を元に戻す
                 labelRelays.Invoke((MethodInvoker)(() =>

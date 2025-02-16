@@ -50,7 +50,11 @@
             label5 = new Label();
             label6 = new Label();
             textBoxReplyCommands = new TextBox();
+            label7 = new Label();
+            checkBoxMentionEveryHour = new CheckBox();
+            numericUpDownMentionMinutes = new NumericUpDown();
             ((System.ComponentModel.ISupportInitialize)trackBarOpacity).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)numericUpDownMentionMinutes).BeginInit();
             SuspendLayout();
             // 
             // textBoxNsec
@@ -129,7 +133,7 @@
             linkLabelIcons8.Location = new Point(291, 297);
             linkLabelIcons8.Name = "linkLabelIcons8";
             linkLabelIcons8.Size = new Size(41, 15);
-            linkLabelIcons8.TabIndex = 12;
+            linkLabelIcons8.TabIndex = 14;
             linkLabelIcons8.TabStop = true;
             linkLabelIcons8.Text = "Icons8";
             linkLabelIcons8.LinkClicked += LinkLabelIcons8_LinkClicked;
@@ -169,7 +173,7 @@
             linkLabelVersion.Location = new Point(12, 297);
             linkLabelVersion.Name = "linkLabelVersion";
             linkLabelVersion.Size = new Size(37, 15);
-            linkLabelVersion.TabIndex = 11;
+            linkLabelVersion.TabIndex = 13;
             linkLabelVersion.TabStop = true;
             linkLabelVersion.Text = "v0.2.1";
             linkLabelVersion.LinkClicked += LinkLabelVersion_LinkClicked;
@@ -254,11 +258,43 @@
             textBoxReplyCommands.Size = new Size(218, 64);
             textBoxReplyCommands.TabIndex = 7;
             // 
+            // label7
+            // 
+            label7.AutoSize = true;
+            label7.Location = new Point(212, 272);
+            label7.Name = "label7";
+            label7.Size = new Size(49, 15);
+            label7.TabIndex = 0;
+            label7.Text = "minutes";
+            // 
+            // checkBoxMentionEveryHour
+            // 
+            checkBoxMentionEveryHour.AutoSize = true;
+            checkBoxMentionEveryHour.Location = new Point(12, 271);
+            checkBoxMentionEveryHour.Name = "checkBoxMentionEveryHour";
+            checkBoxMentionEveryHour.Size = new Size(143, 19);
+            checkBoxMentionEveryHour.TabIndex = 11;
+            checkBoxMentionEveryHour.Text = "Mention every hour at";
+            checkBoxMentionEveryHour.UseVisualStyleBackColor = true;
+            // 
+            // numericUpDownMentionMinutes
+            // 
+            numericUpDownMentionMinutes.Location = new Point(161, 270);
+            numericUpDownMentionMinutes.Maximum = new decimal(new int[] { 59, 0, 0, 0 });
+            numericUpDownMentionMinutes.Name = "numericUpDownMentionMinutes";
+            numericUpDownMentionMinutes.Size = new Size(45, 23);
+            numericUpDownMentionMinutes.TabIndex = 12;
+            numericUpDownMentionMinutes.TextAlign = HorizontalAlignment.Center;
+            numericUpDownMentionMinutes.Value = new decimal(new int[] { 50, 0, 0, 0 });
+            // 
             // FormSetting
             // 
             AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
             ClientSize = new Size(344, 321);
+            Controls.Add(numericUpDownMentionMinutes);
+            Controls.Add(checkBoxMentionEveryHour);
+            Controls.Add(label7);
             Controls.Add(textBoxReplyCommands);
             Controls.Add(label6);
             Controls.Add(label5);
@@ -293,6 +329,7 @@
             Shown += FormSetting_Shown;
             KeyDown += FormSetting_KeyDown;
             ((System.ComponentModel.ISupportInitialize)trackBarOpacity).EndInit();
+            ((System.ComponentModel.ISupportInitialize)numericUpDownMentionMinutes).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -318,5 +355,9 @@
         private Label label5;
         private Label label6;
         internal TextBox textBoxReplyCommands;
+        private Label label7;
+        internal CheckBox checkBoxMentionEveryHour;
+        internal NumericUpDown numericUpDownMentionMinutes;
+        private NumericUpDown numericUpDown1;
     }
 }
