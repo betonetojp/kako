@@ -242,6 +242,7 @@
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Gemini";
             FormClosing += FormAI_FormClosing;
+            Shown += FormAI_Shown;
             KeyDown += FormAI_KeyDown;
             ((System.ComponentModel.ISupportInitialize)numericUpDownNumberOfPosts).EndInit();
             ResumeLayout(false);

@@ -46,6 +46,7 @@ namespace kako
         internal async Task<bool> SummarizeNotesAsync()
         {
             textBoxAnswer.Text = string.Empty;
+            Debug.WriteLine("1-1");
 
             var apiKey = textBoxApiKey.Text;
 
@@ -64,7 +65,9 @@ namespace kako
                     _chat = _model?.StartChat(new StartChatParams());
                     IsInitialized = true;
                     checkBoxInitialized.Checked = IsInitialized;
+                    Debug.WriteLine("1-2");
                     notesContent = textBoxPrompt.Text + textBoxPromptForEveryMessage.Text + notesContent;
+                    Debug.WriteLine("1-3");
                 }
 
                 if (_chat != null)
@@ -73,6 +76,7 @@ namespace kako
                     try
                     {
                         result = await _chat.SendMessageAsync(textBoxPromptForEveryMessage.Text + notesContent);
+                        Debug.WriteLine("1-4");
                         success = true;
                     }
                     catch (Exception ex)
@@ -231,6 +235,12 @@ namespace kako
             {
                 Close();
             }
+        }
+
+        private void FormAI_Shown(object sender, EventArgs e)
+        {
+            // モーダル解除
+            Close();
         }
     }
 }

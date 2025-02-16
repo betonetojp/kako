@@ -703,7 +703,7 @@ namespace kako
             var newEvent = new NostrEvent()
             {
                 Kind = 1,
-                Content = content.Replace("\r\n", "\n"),
+                Content = "nostr:" + _director + " " +  content.Replace("\r\n", "\n"),
                 Tags = tags
             };
 
@@ -1086,6 +1086,8 @@ namespace kako
         {
             // Ctrl + Shift + A をホットキーとして登録
             RegisterHotKey(this.Handle, HOTKEY_ID, MOD_CONTROL | MOD_SHIFT, (int)Keys.A);
+
+            _formAI.ShowDialog();
 
             try
             {
@@ -1490,7 +1492,9 @@ namespace kako
                         LatestCreatedAt = DateTimeOffset.MinValue;
                     }
                     bool success = await _formAI.SummarizeNotesAsync();
+                    Debug.WriteLine("1");
                     await MentionAsync(_formAI.textBoxAnswer.Text);
+                    Debug.WriteLine("2");
                     if (success)
                     {
                         dataGridViewNotes.Invoke((MethodInvoker)(() => dataGridViewNotes.Rows.Clear()));
