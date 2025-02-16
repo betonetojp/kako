@@ -1087,7 +1087,9 @@ namespace kako
             // Ctrl + Shift + A をホットキーとして登録
             RegisterHotKey(this.Handle, HOTKEY_ID, MOD_CONTROL | MOD_SHIFT, (int)Keys.A);
 
-            _formAI.ShowDialog();
+            //_formAI.ShowDialog();
+            _formAI.Show(this);
+            //_formAI.Hide();
 
             try
             {
@@ -1491,10 +1493,15 @@ namespace kako
                         LastCreatedAt = DateTimeOffset.MinValue;
                         LatestCreatedAt = DateTimeOffset.MinValue;
                     }
+                    Debug.WriteLine("1 start");
                     bool success = await _formAI.SummarizeNotesAsync();
-                    Debug.WriteLine("1");
-                    await MentionAsync(_formAI.textBoxAnswer.Text);
-                    Debug.WriteLine("2");
+                    Debug.WriteLine("1 end");
+                    Debug.WriteLine("2 start");
+                    //await MentionAsync(_formAI.textBoxAnswer.Text);
+                    string answerText = string.Empty;
+                    Invoke((MethodInvoker)(() => answerText = _formAI.textBoxAnswer.Text));
+                    Debug.WriteLine("2 end");
+                    await MentionAsync(answerText);
                     if (success)
                     {
                         dataGridViewNotes.Invoke((MethodInvoker)(() => dataGridViewNotes.Rows.Clear()));

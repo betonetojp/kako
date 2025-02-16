@@ -45,7 +45,7 @@ namespace kako
 
         internal async Task<bool> SummarizeNotesAsync()
         {
-            textBoxAnswer.Text = string.Empty;
+            textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = string.Empty));
             Debug.WriteLine("1-1");
 
             var apiKey = textBoxApiKey.Text;
@@ -64,10 +64,18 @@ namespace kako
                 {
                     _chat = _model?.StartChat(new StartChatParams());
                     IsInitialized = true;
-                    checkBoxInitialized.Checked = IsInitialized;
+                    checkBoxInitialized.Invoke((MethodInvoker)(() => checkBoxInitialized.Checked = IsInitialized));
                     Debug.WriteLine("1-2");
-                    notesContent = textBoxPrompt.Text + textBoxPromptForEveryMessage.Text + notesContent;
-                    Debug.WriteLine("1-3");
+                    notesContent = textBoxPrompt.Invoke(() => textBoxPrompt.Text)
+                                 + textBoxPromptForEveryMessage.Invoke(() => textBoxPromptForEveryMessage.Text)
+                                 + notesContent;
+                    Debug.WriteLine("1-3a");
+                }
+                else
+                {
+                    notesContent = textBoxPromptForEveryMessage.Invoke(() => textBoxPromptForEveryMessage.Text)
+                                 + notesContent;
+                    Debug.WriteLine("1-3b");
                 }
 
                 if (_chat != null)
@@ -75,7 +83,7 @@ namespace kako
                     string? result = null;
                     try
                     {
-                        result = await _chat.SendMessageAsync(textBoxPromptForEveryMessage.Text + notesContent);
+                        result = await _chat.SendMessageAsync(notesContent);
                         Debug.WriteLine("1-4");
                         success = true;
                     }
@@ -86,6 +94,7 @@ namespace kako
                     finally
                     {
                         DisplayResult(result);
+                        Debug.WriteLine("1-5");
                     }
                 }
             }
@@ -93,9 +102,9 @@ namespace kako
         }
         internal async Task<bool> SendMessageAsync(string message)
         {
-            textBoxAnswer.Text = string.Empty;
+            textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = string.Empty));
 
-            var apiKey = textBoxApiKey.Text;
+            var apiKey = textBoxApiKey.Invoke(() => textBoxApiKey.Text);
 
             if (!IsInitialized)
             {
@@ -141,13 +150,14 @@ namespace kako
         {
             if (result == null)
             {
-                textBoxAnswer.Text = "電波が悪いみたいです。";
+                textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = "電波が悪いみたいです。"));
                 IsInitialized = false;
-                checkBoxInitialized.Checked = IsInitialized;
+                checkBoxInitialized.Invoke((MethodInvoker)(() => checkBoxInitialized.Checked = IsInitialized));
+
             }
             else
             {
-                textBoxAnswer.Text = result.Replace("\n", "\r\n");
+                textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = result.Replace("\n", "\r\n")));
             }
         }
 
@@ -233,14 +243,18 @@ namespace kako
         {
             if (e.KeyCode == Keys.F5)
             {
-                Close();
+                //Close();
+                SaveApiKey(textBoxApiKey.Text);
+                SaveAISettings();
+                Hide();
             }
         }
 
         private void FormAI_Shown(object sender, EventArgs e)
         {
             // モーダル解除
-            Close();
+            //Close();
+            Hide();
         }
     }
 }
