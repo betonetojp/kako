@@ -1501,7 +1501,14 @@ namespace kako
                     string answerText = string.Empty;
                     Invoke((MethodInvoker)(() => answerText = _formAI.textBoxAnswer.Text));
                     Debug.WriteLine("2 end");
-                    await MentionAsync(answerText);
+                    if (string.IsNullOrEmpty(_director))
+                    {
+                        await PostAsync(answerText);
+                    }
+                    else
+                    {
+                        await MentionAsync(answerText);
+                    }
                     if (success)
                     {
                         dataGridViewNotes.Invoke((MethodInvoker)(() => dataGridViewNotes.Rows.Clear()));
