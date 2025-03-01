@@ -51,6 +51,7 @@ namespace kako
         private bool _addClient;
         private string _director = string.Empty;
         private List<string> _replyCommands = [];
+        private string _callCommand = string.Empty;
         private bool _mentionEveryHour;
         private int _mentionMinutes;
 
@@ -134,6 +135,7 @@ namespace kako
             _addClient = Setting.AddClient;
             _director = Setting.Director;
             _replyCommands = Setting.ReplyCommands;
+            _callCommand = Setting.CallCommand;
             _mentionEveryHour = Setting.MentionEveryHour;
             _mentionMinutes = Setting.MentionMinutes;
 
@@ -421,6 +423,16 @@ namespace kako
                                             GC.Collect();
                                             GC.WaitForPendingFinalizers();
                                             continue;
+                                        }
+                                    }
+
+                                    // 呼出コマンド
+                                    if (!string.IsNullOrEmpty(_callCommand) && content == _callCommand)
+                                    {
+                                        bool success = await _formAI.SendMessageAsync("呼ばれた返事をしてください。");
+                                        if (success)
+                                        {
+                                            await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
                                         }
                                     }
 
@@ -835,6 +847,7 @@ namespace kako
             _formSetting.checkBoxAddClient.Checked = _addClient;
             _formSetting.textBoxDirector.Text = _director;
             _formSetting.textBoxReplyCommands.Text = string.Join("\r\n", _replyCommands);
+            _formSetting.textBoxCallCommand.Text = _callCommand;
             _formSetting.checkBoxMentionEveryHour.Checked = _mentionEveryHour;
             _formSetting.numericUpDownMentionMinutes.Value = _mentionMinutes;
             _formSetting.textBoxNsec.Text = _nsec;
@@ -854,6 +867,7 @@ namespace kako
             _addClient = _formSetting.checkBoxAddClient.Checked;
             _director = _formSetting.textBoxDirector.Text;
             _replyCommands = [.. _formSetting.textBoxReplyCommands.Text.Split(["\r\n"], StringSplitOptions.RemoveEmptyEntries)];
+            _callCommand = _formSetting.textBoxCallCommand.Text;
             _mentionEveryHour = _formSetting.checkBoxMentionEveryHour.Checked;
             _mentionMinutes = (int)_formSetting.numericUpDownMentionMinutes.Value;
             SetDailyTimer();
@@ -917,6 +931,7 @@ namespace kako
             Setting.AddClient = _addClient;
             Setting.Director = _director;
             Setting.ReplyCommands = _replyCommands;
+            Setting.CallCommand = _callCommand;
             Setting.MentionEveryHour = _mentionEveryHour;
             Setting.MentionMinutes = _mentionMinutes;
 

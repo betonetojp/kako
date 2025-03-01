@@ -26,6 +26,7 @@ namespace kako
             public bool AddClient { get; set; } = true;
             public string Director { get; set; } = string.Empty;
             public List<string> ReplyCommands { get; set; } = [];
+            public string CallCommand { get; set; } = string.Empty;
             public bool MentionEveryHour { get; set; } = false;
             public int MentionMinutes { get; set; } = 0;
 
@@ -87,6 +88,11 @@ namespace kako
         {
             get => _data.ReplyCommands;
             set => _data.ReplyCommands = value;
+        }
+        public static string CallCommand
+        {
+            get => _data.CallCommand;
+            set => _data.CallCommand = value;
         }
         public static bool MentionEveryHour
         {
