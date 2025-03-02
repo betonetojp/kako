@@ -52,6 +52,7 @@ namespace kako
         private string _director = string.Empty;
         private List<string> _replyCommands = [];
         private string _callCommand = string.Empty;
+        private bool _openMode;
         private bool _mentionEveryHour;
         private int _mentionMinutes;
 
@@ -136,6 +137,7 @@ namespace kako
             _director = Setting.Director;
             _replyCommands = Setting.ReplyCommands;
             _callCommand = Setting.CallCommand;
+            _openMode = Setting.OpenMode;
             _mentionEveryHour = Setting.MentionEveryHour;
             _mentionMinutes = Setting.MentionMinutes;
 
@@ -425,7 +427,10 @@ namespace kako
                                             continue;
                                         }
                                     }
+                                }
 
+                                if (_openMode || nostrEvent.PublicKey == whoToNotify)
+                                {
                                     // 呼出コマンド
                                     if (!string.IsNullOrEmpty(_callCommand) && content == _callCommand)
                                     {
@@ -435,25 +440,26 @@ namespace kako
                                             await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
                                         }
                                     }
-
-                                    // 返信された時
-                                    var replyTags = nostrEvent.GetTaggedData("p");
-                                    if (replyTags != null && 0 < replyTags.Length)
+                                    else
                                     {
-                                        // 返信先の公開鍵を取得
-                                        string replyTo = replyTags[0];
-                                        if (replyTo.Equals(_npubHex))
+                                        // 返信された時
+                                        var replyTags = nostrEvent.GetTaggedData("p");
+                                        if (replyTags != null && 0 < replyTags.Length)
                                         {
-                                            // 返信先が自分の時
-                                            _formAI.textBoxChat.Text = content;
-                                            bool success = await _formAI.SendMessageAsync(content);
-                                            if (success)
+                                            // 返信先の公開鍵を取得
+                                            string replyTo = replyTags[0];
+                                            if (replyTo.Equals(_npubHex))
                                             {
-                                                await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
+                                                // 返信先が自分の時
+                                                string promptForReply = _formAI.textBoxPromptForReply.Text;
+                                                bool success = await _formAI.SendMessageAsync(promptForReply + "\r\n" + content);
+                                                if (success)
+                                                {
+                                                    await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
+                                                }
                                             }
                                         }
                                     }
-
                                 }
 
                             }
@@ -848,6 +854,7 @@ namespace kako
             _formSetting.textBoxDirector.Text = _director;
             _formSetting.textBoxReplyCommands.Text = string.Join("\r\n", _replyCommands);
             _formSetting.textBoxCallCommand.Text = _callCommand;
+            _formSetting.checkBoxOpenMode.Checked = _openMode;
             _formSetting.checkBoxMentionEveryHour.Checked = _mentionEveryHour;
             _formSetting.numericUpDownMentionMinutes.Value = _mentionMinutes;
             _formSetting.textBoxNsec.Text = _nsec;
@@ -868,6 +875,7 @@ namespace kako
             _director = _formSetting.textBoxDirector.Text;
             _replyCommands = [.. _formSetting.textBoxReplyCommands.Text.Split(["\r\n"], StringSplitOptions.RemoveEmptyEntries)];
             _callCommand = _formSetting.textBoxCallCommand.Text;
+            _openMode = _formSetting.checkBoxOpenMode.Checked;
             _mentionEveryHour = _formSetting.checkBoxMentionEveryHour.Checked;
             _mentionMinutes = (int)_formSetting.numericUpDownMentionMinutes.Value;
             SetDailyTimer();
@@ -921,7 +929,7 @@ namespace kako
                 labelRelays.Text = "Decryption failed.";
             }
             // nsecを保存
-            SavePubkey(_npubHex);
+            Tools.SavePubkey(_npubHex);
             SaveNsec(_npubHex, _nsec);
 
             Setting.TopMost = TopMost;
@@ -932,6 +940,7 @@ namespace kako
             Setting.Director = _director;
             Setting.ReplyCommands = _replyCommands;
             Setting.CallCommand = _callCommand;
+            Setting.OpenMode = _openMode;
             Setting.MentionEveryHour = _mentionEveryHour;
             Setting.MentionMinutes = _mentionMinutes;
 
@@ -1108,7 +1117,7 @@ namespace kako
 
             try
             {
-                _npubHex = LoadPubkey();
+                _npubHex = Tools.LoadPubkey();
                 _nsec = LoadNsec();
                 _formSetting.textBoxNsec.Text = _nsec;
                 _formSetting.textBoxNpub.Text = _nsec.GetNpub();
@@ -1282,22 +1291,7 @@ namespace kako
         }
         #endregion
 
-        #region パスワード管理
-        private static void SavePubkey(string pubkey)
-        {
-            var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-            config.AppSettings.Settings.Remove("pubkey");
-            config.AppSettings.Settings.Add("pubkey", pubkey);
-            config.Save(ConfigurationSaveMode.Modified);
-            ConfigurationManager.RefreshSection("appSettings");
-        }
-
-        private static string LoadPubkey()
-        {
-            var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-            return config.AppSettings.Settings["pubkey"]?.Value ?? string.Empty;
-        }
-
+        #region 秘密鍵管理
         private static void SaveNsec(string pubkey, string nsec)
         {
             // 前回のトークンを削除

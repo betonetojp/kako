@@ -55,6 +55,7 @@
             numericUpDownMentionMinutes = new NumericUpDown();
             label8 = new Label();
             textBoxCallCommand = new TextBox();
+            checkBoxOpenMode = new CheckBox();
             ((System.ComponentModel.ISupportInitialize)trackBarOpacity).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numericUpDownMentionMinutes).BeginInit();
             SuspendLayout();
@@ -70,7 +71,7 @@
             textBoxNsec.PasswordChar = '*';
             textBoxNsec.PlaceholderText = "nsec1...";
             textBoxNsec.Size = new Size(261, 23);
-            textBoxNsec.TabIndex = 9;
+            textBoxNsec.TabIndex = 10;
             textBoxNsec.Leave += TextBoxNsec_Leave;
             // 
             // trackBarOpacity
@@ -135,7 +136,7 @@
             linkLabelIcons8.Location = new Point(291, 337);
             linkLabelIcons8.Name = "linkLabelIcons8";
             linkLabelIcons8.Size = new Size(41, 15);
-            linkLabelIcons8.TabIndex = 15;
+            linkLabelIcons8.TabIndex = 16;
             linkLabelIcons8.TabStop = true;
             linkLabelIcons8.Text = "Icons8";
             linkLabelIcons8.LinkClicked += LinkLabelIcons8_LinkClicked;
@@ -175,9 +176,9 @@
             linkLabelVersion.Location = new Point(12, 337);
             linkLabelVersion.Name = "linkLabelVersion";
             linkLabelVersion.Size = new Size(37, 15);
-            linkLabelVersion.TabIndex = 14;
+            linkLabelVersion.TabIndex = 15;
             linkLabelVersion.TabStop = true;
-            linkLabelVersion.Text = "v0.2.4";
+            linkLabelVersion.Text = "v0.2.5";
             linkLabelVersion.LinkClicked += LinkLabelVersion_LinkClicked;
             // 
             // checkBoxMinimizeToTray
@@ -208,7 +209,7 @@
             textBoxNpub.PlaceholderText = "npub1...";
             textBoxNpub.ReadOnly = true;
             textBoxNpub.Size = new Size(290, 23);
-            textBoxNpub.TabIndex = 11;
+            textBoxNpub.TabIndex = 12;
             // 
             // buttonLogOut
             // 
@@ -217,7 +218,7 @@
             buttonLogOut.Location = new Point(349, 241);
             buttonLogOut.Name = "buttonLogOut";
             buttonLogOut.Size = new Size(23, 23);
-            buttonLogOut.TabIndex = 10;
+            buttonLogOut.TabIndex = 11;
             toolTipLogOut.SetToolTip(buttonLogOut, "Log out");
             buttonLogOut.UseVisualStyleBackColor = true;
             buttonLogOut.Click += ButtonLogOut_Click;
@@ -275,7 +276,7 @@
             checkBoxMentionEveryHour.Location = new Point(12, 300);
             checkBoxMentionEveryHour.Name = "checkBoxMentionEveryHour";
             checkBoxMentionEveryHour.Size = new Size(143, 19);
-            checkBoxMentionEveryHour.TabIndex = 12;
+            checkBoxMentionEveryHour.TabIndex = 13;
             checkBoxMentionEveryHour.Text = "Mention every hour at";
             checkBoxMentionEveryHour.UseVisualStyleBackColor = true;
             // 
@@ -285,7 +286,7 @@
             numericUpDownMentionMinutes.Maximum = new decimal(new int[] { 59, 0, 0, 0 });
             numericUpDownMentionMinutes.Name = "numericUpDownMentionMinutes";
             numericUpDownMentionMinutes.Size = new Size(45, 23);
-            numericUpDownMentionMinutes.TabIndex = 13;
+            numericUpDownMentionMinutes.TabIndex = 14;
             numericUpDownMentionMinutes.TextAlign = HorizontalAlignment.Center;
             numericUpDownMentionMinutes.Value = new decimal(new int[] { 50, 0, 0, 0 });
             // 
@@ -303,14 +304,25 @@
             textBoxCallCommand.BorderStyle = BorderStyle.FixedSingle;
             textBoxCallCommand.Location = new Point(114, 212);
             textBoxCallCommand.Name = "textBoxCallCommand";
-            textBoxCallCommand.Size = new Size(241, 23);
+            textBoxCallCommand.Size = new Size(164, 23);
             textBoxCallCommand.TabIndex = 8;
+            // 
+            // checkBoxOpenMode
+            // 
+            checkBoxOpenMode.AutoSize = true;
+            checkBoxOpenMode.Location = new Point(284, 213);
+            checkBoxOpenMode.Name = "checkBoxOpenMode";
+            checkBoxOpenMode.Size = new Size(88, 19);
+            checkBoxOpenMode.TabIndex = 9;
+            checkBoxOpenMode.Text = "Open mode";
+            checkBoxOpenMode.UseVisualStyleBackColor = true;
             // 
             // FormSetting
             // 
             AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
             ClientSize = new Size(384, 361);
+            Controls.Add(checkBoxOpenMode);
             Controls.Add(textBoxCallCommand);
             Controls.Add(label8);
             Controls.Add(numericUpDownMentionMinutes);
@@ -382,5 +394,6 @@
         private NumericUpDown numericUpDown1;
         private Label label8;
         internal TextBox textBoxCallCommand;
+        internal CheckBox checkBoxOpenMode;
     }
 }

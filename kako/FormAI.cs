@@ -172,14 +172,14 @@ namespace kako
 
         private static void SaveApiKey(string apiKey)
         {
-            Tools.SaveApiKey(ApiKeyTarget, apiKey);
+            Tools.SaveApiKey(ApiKeyTarget + "_" + Tools.LoadPubkey(), apiKey);
         }
 
         private void LoadApiKey()
         {
             try
             {
-                var apiKey = Tools.LoadApiKey(ApiKeyTarget);
+                var apiKey = Tools.LoadApiKey(ApiKeyTarget + "_" + Tools.LoadPubkey());
                 if (!string.IsNullOrEmpty(apiKey))
                 {
                     textBoxApiKey.Text = apiKey;
@@ -198,7 +198,8 @@ namespace kako
                 NumberOfPosts = (int)numericUpDownNumberOfPosts.Value,
                 Model = textBoxModel.Text,
                 Prompt = textBoxPrompt.Text,
-                PromptForEveryMessage = textBoxPromptForEveryMessage.Text
+                PromptForEveryMessage = textBoxPromptForEveryMessage.Text,
+                PromptForReply = textBoxPromptForReply.Text
             };
             Tools.SaveAISettings(settings);
         }
@@ -210,6 +211,7 @@ namespace kako
             textBoxModel.Text = settings.Model;
             textBoxPrompt.Text = settings.Prompt;
             textBoxPromptForEveryMessage.Text = settings.PromptForEveryMessage;
+            textBoxPromptForReply.Text = settings.PromptForReply;
         }
 
         private void CheckBoxInitialized_CheckedChanged(object sender, EventArgs e)

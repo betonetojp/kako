@@ -27,6 +27,7 @@ namespace kako
             public string Director { get; set; } = string.Empty;
             public List<string> ReplyCommands { get; set; } = [];
             public string CallCommand { get; set; } = string.Empty;
+            public bool OpenMode { get; set; } = false;
             public bool MentionEveryHour { get; set; } = false;
             public int MentionMinutes { get; set; } = 0;
 
@@ -93,6 +94,11 @@ namespace kako
         {
             get => _data.CallCommand;
             set => _data.CallCommand = value;
+        }
+        public static bool OpenMode
+        {
+            get => _data.OpenMode;
+            set => _data.OpenMode = value;
         }
         public static bool MentionEveryHour
         {
