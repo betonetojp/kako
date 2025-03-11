@@ -55,6 +55,7 @@ namespace kako
         private bool _openMode;
         private bool _mentionEveryHour;
         private int _mentionMinutes;
+        private int _callReplyLimit;
 
         private double _tempOpacity = 1.00;
 
@@ -73,6 +74,10 @@ namespace kako
         internal DateTimeOffset LastCreatedAt = DateTimeOffset.MinValue;
         // 最新のcreated_at
         internal DateTimeOffset LatestCreatedAt = DateTimeOffset.MinValue;
+
+        // スタミナ管理
+        private int _callReplyCount = 0;
+        private bool _alreadyPostedBreakMessage = false;
         #endregion
 
         #region コンストラクタ
@@ -140,6 +145,7 @@ namespace kako
             _openMode = Setting.OpenMode;
             _mentionEveryHour = Setting.MentionEveryHour;
             _mentionMinutes = Setting.MentionMinutes;
+            _callReplyLimit = Setting.CallReplyLimit;
 
             dataGridViewNotes.Columns["name"].Width = Setting.NameColumnWidth;
             dataGridViewNotes.GridColor = Tools.HexToColor(Setting.GridColor);
@@ -431,13 +437,30 @@ namespace kako
 
                                 if (_openMode || nostrEvent.PublicKey == whoToNotify)
                                 {
+                                    bool success;
                                     // 呼出コマンド
                                     if (!string.IsNullOrEmpty(_callCommand) && content == _callCommand)
                                     {
-                                        bool success = await _formAI.SendMessageAsync("呼ばれた返事をしてください。");
+                                        if (_callReplyCount >= _callReplyLimit)
+                                        {
+                                            if (!_alreadyPostedBreakMessage)
+                                            {
+                                                success = await _formAI.SendMessageAsync("疲れたからしばらく休むことを宣言ください。");
+                                                if (success)
+                                                {
+                                                    await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
+                                                }
+                                                _alreadyPostedBreakMessage = true;
+                                            }
+                                            Debug.WriteLine("呼出コマンドの上限に達しました。");
+                                            return;
+                                        }
+
+                                        success = await _formAI.SendMessageAsync("呼ばれた返事をしてください。");
                                         if (success)
                                         {
                                             await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
+                                            _callReplyCount++;
                                         }
                                     }
                                     else
@@ -450,12 +473,28 @@ namespace kako
                                             string replyTo = replyTags[0];
                                             if (replyTo.Equals(_npubHex))
                                             {
+                                                if (_callReplyCount >= _callReplyLimit)
+                                                {
+                                                    if (!_alreadyPostedBreakMessage)
+                                                    {
+                                                        success = await _formAI.SendMessageAsync("疲れたからしばらく休むことを宣言ください。");
+                                                        if (success)
+                                                        {
+                                                            await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
+                                                        }
+                                                        _alreadyPostedBreakMessage = true;
+                                                    }
+                                                    Debug.WriteLine("返信の上限に達しました。");
+                                                    return;
+                                                }
+
                                                 // 返信先が自分の時
                                                 string promptForReply = _formAI.textBoxPromptForReply.Text;
-                                                bool success = await _formAI.SendMessageAsync(promptForReply + "\r\n" + content);
+                                                success = await _formAI.SendMessageAsync(promptForReply + "\r\n" + content);
                                                 if (success)
                                                 {
                                                     await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
+                                                    _callReplyCount++;
                                                 }
                                             }
                                         }
@@ -857,6 +896,7 @@ namespace kako
             _formSetting.checkBoxOpenMode.Checked = _openMode;
             _formSetting.checkBoxMentionEveryHour.Checked = _mentionEveryHour;
             _formSetting.numericUpDownMentionMinutes.Value = _mentionMinutes;
+            _formSetting.numericUpDownCallReplyLimit.Value = _callReplyLimit;
             _formSetting.textBoxNsec.Text = _nsec;
             _formSetting.textBoxNpub.Text = _nsec.GetNpub();
 
@@ -878,6 +918,7 @@ namespace kako
             _openMode = _formSetting.checkBoxOpenMode.Checked;
             _mentionEveryHour = _formSetting.checkBoxMentionEveryHour.Checked;
             _mentionMinutes = (int)_formSetting.numericUpDownMentionMinutes.Value;
+            _callReplyLimit = (int)_formSetting.numericUpDownCallReplyLimit.Value;
             SetDailyTimer();
             try
             {
@@ -943,6 +984,7 @@ namespace kako
             Setting.OpenMode = _openMode;
             Setting.MentionEveryHour = _mentionEveryHour;
             Setting.MentionMinutes = _mentionMinutes;
+            Setting.CallReplyLimit = _callReplyLimit;
 
             Setting.Save(_configPath);
             _clients = Tools.LoadClients();
@@ -1554,7 +1596,7 @@ namespace kako
                 MessageBox.Show($"再接続に失敗しました: {ex.Message}", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
-            // タイマーは毎時実行されるので再設定は不要
+            _callReplyCount = 0; // 上限リセット
         }
         #endregion
     }

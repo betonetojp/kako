@@ -23,13 +23,14 @@ namespace kako
             public double Opacity { get; set; } = 1.00;
             public bool ShowOnlyFollowees { get; set; } = true;
             public bool MinimizeToTray { get; set; } = false;
-            public bool AddClient { get; set; } = true;
+            public bool AddClient { get; set; } = false;
             public string Director { get; set; } = string.Empty;
             public List<string> ReplyCommands { get; set; } = [];
             public string CallCommand { get; set; } = string.Empty;
             public bool OpenMode { get; set; } = false;
             public bool MentionEveryHour { get; set; } = false;
             public int MentionMinutes { get; set; } = 0;
+            public int CallReplyLimit { get; set; } = 10;
 
             public string GridColor { get; set; } = "#FF1493";
             public string ReactionColor { get; set; } = "#FFFFE0";
@@ -109,6 +110,11 @@ namespace kako
         {
             get => _data.MentionMinutes;
             set => _data.MentionMinutes = value;
+        }
+        public static int CallReplyLimit
+        {
+            get => _data.CallReplyLimit;
+            set => _data.CallReplyLimit = value;
         }
 
         public static string GridColor

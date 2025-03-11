@@ -56,8 +56,11 @@
             label8 = new Label();
             textBoxCallCommand = new TextBox();
             checkBoxOpenMode = new CheckBox();
+            numericUpDownCallReplyLimit = new NumericUpDown();
+            label9 = new Label();
             ((System.ComponentModel.ISupportInitialize)trackBarOpacity).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numericUpDownMentionMinutes).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)numericUpDownCallReplyLimit).BeginInit();
             SuspendLayout();
             // 
             // textBoxNsec
@@ -76,7 +79,7 @@
             // 
             // trackBarOpacity
             // 
-            trackBarOpacity.Location = new Point(212, 31);
+            trackBarOpacity.Location = new Point(252, 31);
             trackBarOpacity.Maximum = 100;
             trackBarOpacity.Minimum = 20;
             trackBarOpacity.Name = "trackBarOpacity";
@@ -99,7 +102,7 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(212, 13);
+            label1.Location = new Point(252, 13);
             label1.Name = "label1";
             label1.Size = new Size(48, 15);
             label1.TabIndex = 0;
@@ -108,8 +111,6 @@
             // checkBoxAddClient
             // 
             checkBoxAddClient.AutoSize = true;
-            checkBoxAddClient.Checked = true;
-            checkBoxAddClient.CheckState = CheckState.Checked;
             checkBoxAddClient.ForeColor = SystemColors.ControlText;
             checkBoxAddClient.Location = new Point(12, 62);
             checkBoxAddClient.Name = "checkBoxAddClient";
@@ -123,7 +124,7 @@
             label4.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             label4.AutoSize = true;
             label4.ForeColor = SystemColors.GrayText;
-            label4.Location = new Point(159, 337);
+            label4.Location = new Point(199, 337);
             label4.Name = "label4";
             label4.Size = new Size(126, 15);
             label4.TabIndex = 0;
@@ -133,17 +134,17 @@
             // 
             linkLabelIcons8.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             linkLabelIcons8.AutoSize = true;
-            linkLabelIcons8.Location = new Point(291, 337);
+            linkLabelIcons8.Location = new Point(331, 337);
             linkLabelIcons8.Name = "linkLabelIcons8";
             linkLabelIcons8.Size = new Size(41, 15);
-            linkLabelIcons8.TabIndex = 16;
+            linkLabelIcons8.TabIndex = 17;
             linkLabelIcons8.TabStop = true;
             linkLabelIcons8.Text = "Icons8";
             linkLabelIcons8.LinkClicked += LinkLabelIcons8_LinkClicked;
             // 
             // labelOpacity
             // 
-            labelOpacity.Location = new Point(291, 13);
+            labelOpacity.Location = new Point(331, 13);
             labelOpacity.Name = "labelOpacity";
             labelOpacity.Size = new Size(41, 15);
             labelOpacity.TabIndex = 0;
@@ -176,9 +177,9 @@
             linkLabelVersion.Location = new Point(12, 337);
             linkLabelVersion.Name = "linkLabelVersion";
             linkLabelVersion.Size = new Size(37, 15);
-            linkLabelVersion.TabIndex = 15;
+            linkLabelVersion.TabIndex = 16;
             linkLabelVersion.TabStop = true;
-            linkLabelVersion.Text = "v0.2.5";
+            linkLabelVersion.Text = "v0.2.6";
             linkLabelVersion.LinkClicked += LinkLabelVersion_LinkClicked;
             // 
             // checkBoxMinimizeToTray
@@ -288,7 +289,6 @@
             numericUpDownMentionMinutes.Size = new Size(45, 23);
             numericUpDownMentionMinutes.TabIndex = 14;
             numericUpDownMentionMinutes.TextAlign = HorizontalAlignment.Center;
-            numericUpDownMentionMinutes.Value = new decimal(new int[] { 50, 0, 0, 0 });
             // 
             // label8
             // 
@@ -317,14 +317,35 @@
             checkBoxOpenMode.Text = "Open mode";
             checkBoxOpenMode.UseVisualStyleBackColor = true;
             // 
+            // numericUpDownCallReplyLimit
+            // 
+            numericUpDownCallReplyLimit.Location = new Point(327, 299);
+            numericUpDownCallReplyLimit.Maximum = new decimal(new int[] { 99, 0, 0, 0 });
+            numericUpDownCallReplyLimit.Name = "numericUpDownCallReplyLimit";
+            numericUpDownCallReplyLimit.Size = new Size(45, 23);
+            numericUpDownCallReplyLimit.TabIndex = 15;
+            numericUpDownCallReplyLimit.TextAlign = HorizontalAlignment.Center;
+            numericUpDownCallReplyLimit.Value = new decimal(new int[] { 10, 0, 0, 0 });
+            // 
+            // label9
+            // 
+            label9.AutoSize = true;
+            label9.Location = new Point(273, 301);
+            label9.Name = "label9";
+            label9.Size = new Size(48, 15);
+            label9.TabIndex = 0;
+            label9.Text = "stamina";
+            // 
             // FormSetting
             // 
             AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
             ClientSize = new Size(384, 361);
+            Controls.Add(label9);
             Controls.Add(checkBoxOpenMode);
             Controls.Add(textBoxCallCommand);
             Controls.Add(label8);
+            Controls.Add(numericUpDownCallReplyLimit);
             Controls.Add(numericUpDownMentionMinutes);
             Controls.Add(checkBoxMentionEveryHour);
             Controls.Add(label7);
@@ -363,6 +384,7 @@
             KeyDown += FormSetting_KeyDown;
             ((System.ComponentModel.ISupportInitialize)trackBarOpacity).EndInit();
             ((System.ComponentModel.ISupportInitialize)numericUpDownMentionMinutes).EndInit();
+            ((System.ComponentModel.ISupportInitialize)numericUpDownCallReplyLimit).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -395,5 +417,7 @@
         private Label label8;
         internal TextBox textBoxCallCommand;
         internal CheckBox checkBoxOpenMode;
+        internal NumericUpDown numericUpDownCallReplyLimit;
+        private Label label9;
     }
 }
