@@ -330,11 +330,11 @@
             // label9
             // 
             label9.AutoSize = true;
-            label9.Location = new Point(273, 301);
+            label9.Location = new Point(272, 301);
             label9.Name = "label9";
-            label9.Size = new Size(48, 15);
+            label9.Size = new Size(49, 15);
             label9.TabIndex = 0;
-            label9.Text = "stamina";
+            label9.Text = "Stamina";
             // 
             // FormSetting
             // 
