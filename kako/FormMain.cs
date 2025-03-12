@@ -456,7 +456,7 @@ namespace kako
                                             return;
                                         }
 
-                                        success = await _formAI.SendMessageAsync("呼ばれた返事をしてください。");
+                                        success = await _formAI.SendMessageAsync(GetUserName(nostrEvent.PublicKey) + "さんが呼んでいます。返事をしてください。");
                                         if (success)
                                         {
                                             await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
@@ -490,7 +490,7 @@ namespace kako
 
                                                 // 返信先が自分の時
                                                 string promptForReply = _formAI.textBoxPromptForReply.Text;
-                                                success = await _formAI.SendMessageAsync(promptForReply + "\r\n" + content);
+                                                success = await _formAI.SendMessageAsync(promptForReply + "\r\n" + GetUserName(nostrEvent.PublicKey) + "さんからの返信：\r\n" + content);
                                                 if (success)
                                                 {
                                                     await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
