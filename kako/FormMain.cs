@@ -322,7 +322,7 @@ namespace kako
         /// タイムラインイベント受信時処理
         /// </summary>
         /// <param name="sender"></param>
-        /// <param name="args"></param>
+        /// <param="args"></param>
         private async void OnClientOnTimeLineEventsReceived(object? sender, (string subscriptionId, NostrEvent[] events) args)
         {
             if (args.subscriptionId == NostrAccess.SubscriptionId)
@@ -441,66 +441,85 @@ namespace kako
                                     // 呼出コマンド
                                     if (!string.IsNullOrEmpty(_callCommand) && content == _callCommand)
                                     {
-                                        if (_callReplyCount >= _callReplyLimit)
+                                        if (_alreadyPostedBreakMessage)
                                         {
-                                            if (!_alreadyPostedBreakMessage)
+                                            Debug.WriteLine("スタミナが切れています。");
+                                        }
+                                        else
+                                        {
+                                            success = await _formAI.SendMessageAsync(GetUserName(nostrEvent.PublicKey) + "さんが呼んでいます。返事をしてください。");
+                                            if (success)
+                                            {
+                                                await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
+                                                _callReplyCount++;
+                                            }
+
+                                            if (_callReplyCount >= _callReplyLimit)
                                             {
                                                 success = await _formAI.SendMessageAsync("疲れたからしばらく休むことを宣言ください。");
                                                 if (success)
                                                 {
-                                                    await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
+                                                    if (_openMode)
+                                                    {
+                                                        await PostAsync(_formAI.textBoxAnswer.Text);
+                                                    }
+                                                    else
+                                                    {
+                                                        await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
+                                                    }
                                                 }
                                                 _alreadyPostedBreakMessage = true;
+                                                Debug.WriteLine("スタミナが切れました。");
                                             }
-                                            Debug.WriteLine("呼出コマンドの上限に達しました。");
-                                            return;
-                                        }
-
-                                        success = await _formAI.SendMessageAsync(GetUserName(nostrEvent.PublicKey) + "さんが呼んでいます。返事をしてください。");
-                                        if (success)
-                                        {
-                                            await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
-                                            _callReplyCount++;
                                         }
                                     }
                                     else
                                     {
-                                        // 返信された時
+                                        // 返信の時
                                         var replyTags = nostrEvent.GetTaggedData("p");
                                         if (replyTags != null && 0 < replyTags.Length)
                                         {
                                             // 返信先の公開鍵を取得
                                             string replyTo = replyTags[0];
+                                            // 返信先が自分の時
                                             if (replyTo.Equals(_npubHex))
                                             {
-                                                if (_callReplyCount >= _callReplyLimit)
+                                                if (_alreadyPostedBreakMessage)
                                                 {
-                                                    if (!_alreadyPostedBreakMessage)
+                                                    Debug.WriteLine("スタミナが切れています。");
+                                                }
+                                                else
+                                                {
+                                                    string promptForReply = _formAI.textBoxPromptForReply.Text;
+                                                    success = await _formAI.SendMessageAsync(promptForReply + "\r\n" + GetUserName(nostrEvent.PublicKey) + "さんからの返信：\r\n" + content);
+                                                    if (success)
+                                                    {
+                                                        await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
+                                                        _callReplyCount++;
+                                                    }
+
+                                                    if (_callReplyCount >= _callReplyLimit)
                                                     {
                                                         success = await _formAI.SendMessageAsync("疲れたからしばらく休むことを宣言ください。");
                                                         if (success)
                                                         {
-                                                            await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
+                                                            if (_openMode)
+                                                            {
+                                                                await PostAsync(_formAI.textBoxAnswer.Text);
+                                                            }
+                                                            else
+                                                            {
+                                                                await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
+                                                            }
                                                         }
                                                         _alreadyPostedBreakMessage = true;
+                                                        Debug.WriteLine("スタミナが切れました。");
                                                     }
-                                                    Debug.WriteLine("返信の上限に達しました。");
-                                                    return;
-                                                }
-
-                                                // 返信先が自分の時
-                                                string promptForReply = _formAI.textBoxPromptForReply.Text;
-                                                success = await _formAI.SendMessageAsync(promptForReply + "\r\n" + GetUserName(nostrEvent.PublicKey) + "さんからの返信：\r\n" + content);
-                                                if (success)
-                                                {
-                                                    await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
-                                                    _callReplyCount++;
                                                 }
                                             }
                                         }
                                     }
                                 }
-
                             }
                             catch (Exception ex)
                             {
@@ -920,6 +939,9 @@ namespace kako
             _mentionMinutes = (int)_formSetting.numericUpDownMentionMinutes.Value;
             _callReplyLimit = (int)_formSetting.numericUpDownCallReplyLimit.Value;
             SetDailyTimer();
+            // スタミナリセット
+            _callReplyCount = 0;
+            _alreadyPostedBreakMessage = false;
             try
             {
                 // 別アカウントログイン失敗に備えてクリアしておく
@@ -1596,7 +1618,9 @@ namespace kako
                 MessageBox.Show($"再接続に失敗しました: {ex.Message}", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
-            _callReplyCount = 0; // 上限リセット
+            // スタミナリセット
+            _callReplyCount = 0;
+            _alreadyPostedBreakMessage = false;
         }
         #endregion
     }
