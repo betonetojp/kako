@@ -938,10 +938,12 @@ namespace kako
             _mentionEveryHour = _formSetting.checkBoxMentionEveryHour.Checked;
             _mentionMinutes = (int)_formSetting.numericUpDownMentionMinutes.Value;
             _callReplyLimit = (int)_formSetting.numericUpDownCallReplyLimit.Value;
+            // タイマーの初期化
             SetDailyTimer();
             // スタミナリセット
             _callReplyCount = 0;
             _alreadyPostedBreakMessage = false;
+
             try
             {
                 // 別アカウントログイン失敗に備えてクリアしておく
@@ -1530,7 +1532,7 @@ namespace kako
             }
             TimeSpan timeToGo = nextTrigger - now;
             _dailyTimer?.Dispose();
-            _dailyTimer = new System.Threading.Timer(DailyTimerCallback, null, timeToGo, TimeSpan.FromHours(1));
+            _dailyTimer = new System.Threading.Timer(DailyTimerCallback, null, timeToGo, Timeout.InfiniteTimeSpan);
         }
 
         // デイリータイマーのコールバック
@@ -1621,6 +1623,9 @@ namespace kako
             // スタミナリセット
             _callReplyCount = 0;
             _alreadyPostedBreakMessage = false;
+
+            // タイマーの再設定
+            SetDailyTimer();
         }
         #endregion
     }
