@@ -21,7 +21,7 @@ namespace kako
             // textBoxModelが空の時はデフォルト値を設定
             if (string.IsNullOrEmpty(textBoxModel.Text))
             {
-                textBoxModel.Text = "gemini-1.5-flash";
+                textBoxModel.Text = "gemini-2.0-flash";
             }
         }
 
@@ -46,7 +46,6 @@ namespace kako
         internal async Task<bool> SummarizeNotesAsync()
         {
             textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = string.Empty));
-            Debug.WriteLine("1-1");
 
             var apiKey = textBoxApiKey.Text;
 
@@ -65,17 +64,14 @@ namespace kako
                     _chat = _model?.StartChat(new StartChatParams());
                     IsInitialized = true;
                     checkBoxInitialized.Invoke((MethodInvoker)(() => checkBoxInitialized.Checked = IsInitialized));
-                    Debug.WriteLine("1-2");
                     notesContent = textBoxPrompt.Invoke(() => textBoxPrompt.Text)
                                  + textBoxPromptForEveryMessage.Invoke(() => textBoxPromptForEveryMessage.Text)
                                  + notesContent;
-                    Debug.WriteLine("1-3a");
                 }
                 else
                 {
                     notesContent = textBoxPromptForEveryMessage.Invoke(() => textBoxPromptForEveryMessage.Text)
                                  + notesContent;
-                    Debug.WriteLine("1-3b");
                 }
 
                 if (_chat != null)
@@ -84,7 +80,6 @@ namespace kako
                     try
                     {
                         result = await _chat.SendMessageAsync(notesContent);
-                        Debug.WriteLine("1-4");
                         success = true;
                     }
                     catch (Exception ex)
@@ -94,7 +89,6 @@ namespace kako
                     finally
                     {
                         DisplayResult(result);
-                        Debug.WriteLine("1-5");
                     }
                 }
             }
@@ -254,6 +248,10 @@ namespace kako
 
         private void FormAI_Shown(object sender, EventArgs e)
         {
+            if (!string.IsNullOrEmpty(textBoxApiKey.Text))
+            {
+                _ = SummarizeNotesAsync();
+            }
             // モーダル解除
             //Close();
             Hide();

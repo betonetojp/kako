@@ -21,15 +21,18 @@ namespace kako
 
             public bool TopMost { get; set; } = false;
             public double Opacity { get; set; } = 1.00;
-            public bool ShowOnlyFollowees { get; set; } = true;
             public bool MinimizeToTray { get; set; } = false;
-            public bool AddClient { get; set; } = false;
+            public bool AddClient { get; set; } = true;
+
             public string Director { get; set; } = string.Empty;
-            public List<string> ReplyCommands { get; set; } = [];
-            public string CallCommand { get; set; } = string.Empty;
-            public bool OpenMode { get; set; } = false;
+            public bool ShowOnlyFollowees { get; set; } = true;
+            public bool UsePetname { get; set; } = true;
             public bool MentionEveryHour { get; set; } = false;
             public int MentionMinutes { get; set; } = 0;
+            public bool MentionMode { get; set; } = true;
+            public List<string> ForceCommands { get; set; } = [];
+            public List<string> CallCommands { get; set; } = [];
+            public bool OpenMode { get; set; } = false;
             public int CallReplyLimit { get; set; } = 10;
 
             public string GridColor { get; set; } = "#FF1493";
@@ -66,11 +69,6 @@ namespace kako
             get => _data.Opacity;
             set => _data.Opacity = value;
         }
-        public static bool ShowOnlyFollowees
-        {
-            get => _data.ShowOnlyFollowees;
-            set => _data.ShowOnlyFollowees = value;
-        }
         public static bool MinimizeToTray
         {
             get => _data.MinimizeToTray;
@@ -81,25 +79,21 @@ namespace kako
             get => _data.AddClient;
             set => _data.AddClient = value;
         }
+
         public static string Director
         {
             get => _data.Director;
             set => _data.Director = value;
         }
-        public static List<string> ReplyCommands
+        public static bool ShowOnlyFollowees
         {
-            get => _data.ReplyCommands;
-            set => _data.ReplyCommands = value;
+            get => _data.ShowOnlyFollowees;
+            set => _data.ShowOnlyFollowees = value;
         }
-        public static string CallCommand
+        public static bool UsePetname
         {
-            get => _data.CallCommand;
-            set => _data.CallCommand = value;
-        }
-        public static bool OpenMode
-        {
-            get => _data.OpenMode;
-            set => _data.OpenMode = value;
+            get => _data.UsePetname;
+            set => _data.UsePetname = value;
         }
         public static bool MentionEveryHour
         {
@@ -110,6 +104,26 @@ namespace kako
         {
             get => _data.MentionMinutes;
             set => _data.MentionMinutes = value;
+        }
+        public static bool MentionMode
+        {
+            get => _data.MentionMode;
+            set => _data.MentionMode = value;
+        }
+        public static List<string> ForceCommands
+        {
+            get => _data.ForceCommands;
+            set => _data.ForceCommands = value;
+        }
+        public static List<string> CallCommands
+        {
+            get => _data.CallCommands;
+            set => _data.CallCommands = value;
+        }
+        public static bool OpenMode
+        {
+            get => _data.OpenMode;
+            set => _data.OpenMode = value;
         }
         public static int CallReplyLimit
         {

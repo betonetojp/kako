@@ -46,15 +46,18 @@ namespace kako
         /// </summary>
         internal Dictionary<string, User?> Users = [];
 
-        private bool _showOnlyFollowees;
         private bool _minimizeToTray;
         private bool _addClient;
+
         private string _director = string.Empty;
-        private List<string> _replyCommands = [];
-        private string _callCommand = string.Empty;
-        private bool _openMode;
+        private bool _showOnlyFollowees;
+        private bool _usePetname;
         private bool _mentionEveryHour;
         private int _mentionMinutes;
+        private bool _mentionMode;
+        private List<string> _forceCommands = [];
+        private List<string> _callCommands = [];
+        private bool _openMode;
         private int _callReplyLimit;
 
         private double _tempOpacity = 1.00;
@@ -135,16 +138,19 @@ namespace kako
                 Opacity = 1;
             }
             _tempOpacity = Opacity;
-            _showOnlyFollowees = Setting.ShowOnlyFollowees;
             _minimizeToTray = Setting.MinimizeToTray;
             notifyIcon.Visible = _minimizeToTray;
             _addClient = Setting.AddClient;
+            
             _director = Setting.Director;
-            _replyCommands = Setting.ReplyCommands;
-            _callCommand = Setting.CallCommand;
-            _openMode = Setting.OpenMode;
+            _showOnlyFollowees = Setting.ShowOnlyFollowees;
+            _usePetname = Setting.UsePetname;
             _mentionEveryHour = Setting.MentionEveryHour;
             _mentionMinutes = Setting.MentionMinutes;
+            _mentionMode = Setting.MentionMode;
+            _forceCommands = Setting.ForceCommands;
+            _callCommands = Setting.CallCommands;
+            _openMode = Setting.OpenMode;
             _callReplyLimit = Setting.CallReplyLimit;
 
             dataGridViewNotes.Columns["name"].Width = Setting.NameColumnWidth;
@@ -408,15 +414,27 @@ namespace kako
                                 whoToNotify = _director.ConvertToHex();
                                 if (nostrEvent.PublicKey == whoToNotify)
                                 {
-                                    // リセットコマンド
-                                    if (content == "reset")
+                                    // 返信の時
+                                    var replyTags = nostrEvent.GetTaggedData("p");
+                                    if (replyTags != null && 0 < replyTags.Length)
                                     {
-                                        await PostAsync("AIをリセットしました。", nostrEvent);
-                                        _formAI.checkBoxInitialized.Checked = false;
+                                        // 返信先の公開鍵を取得
+                                        string replyTo = replyTags[0];
+                                        // 返信先が自分の時
+                                        if (replyTo.Equals(_npubHex))
+                                        {
+                                            // リセットコマンド
+                                            if (content == "reset")
+                                            {
+                                                await PostAsync("AIをリセットしました。", nostrEvent);
+                                                _formAI.checkBoxInitialized.Checked = false;
+                                                continue;
+                                            }
+                                        }
                                     }
 
                                     // まとめコマンド
-                                    if (_replyCommands.Contains(content))
+                                    if (_forceCommands.Contains(content))
                                     {
                                         if (!_formAI.IsInitialized)
                                         {
@@ -439,7 +457,7 @@ namespace kako
                                 {
                                     bool success;
                                     // 呼出コマンド
-                                    if (!string.IsNullOrEmpty(_callCommand) && content == _callCommand)
+                                    if (_callCommands.Contains(content))
                                     {
                                         if (_alreadyPostedBreakMessage)
                                         {
@@ -903,19 +921,23 @@ namespace kako
         private async void ButtonSetting_Click(object sender, EventArgs e)
         {
             // 開く前
-            Opacity = _tempOpacity;
             _formSetting.checkBoxTopMost.Checked = TopMost;
+            Opacity = _tempOpacity;
             _formSetting.trackBarOpacity.Value = (int)(Opacity * 100);
-            _formSetting.checkBoxShowOnlyFollowees.Checked = _showOnlyFollowees;
             _formSetting.checkBoxMinimizeToTray.Checked = _minimizeToTray;
             _formSetting.checkBoxAddClient.Checked = _addClient;
+
             _formSetting.textBoxDirector.Text = _director;
-            _formSetting.textBoxReplyCommands.Text = string.Join("\r\n", _replyCommands);
-            _formSetting.textBoxCallCommand.Text = _callCommand;
-            _formSetting.checkBoxOpenMode.Checked = _openMode;
+            _formSetting.checkBoxShowOnlyFollowees.Checked = _showOnlyFollowees;
+            _formSetting.checkBoxUsePetname.Checked = _usePetname;
             _formSetting.checkBoxMentionEveryHour.Checked = _mentionEveryHour;
             _formSetting.numericUpDownMentionMinutes.Value = _mentionMinutes;
+            _formSetting.checkBoxMentionMode.Checked = _mentionMode;
+            _formSetting.textBoxForceCommands.Text = string.Join("\r\n", _forceCommands);
+            _formSetting.textBoxCallCommands.Text = string.Join("\r\n", _callCommands);
+            _formSetting.checkBoxOpenMode.Checked = _openMode;
             _formSetting.numericUpDownCallReplyLimit.Value = _callReplyLimit;
+
             _formSetting.textBoxNsec.Text = _nsec;
             _formSetting.textBoxNpub.Text = _nsec.GetNpub();
 
@@ -926,18 +948,23 @@ namespace kako
             TopMost = _formSetting.checkBoxTopMost.Checked;
             Opacity = _formSetting.trackBarOpacity.Value / 100.0;
             _tempOpacity = Opacity;
-            _showOnlyFollowees = _formSetting.checkBoxShowOnlyFollowees.Checked;
             _minimizeToTray = _formSetting.checkBoxMinimizeToTray.Checked;
             notifyIcon.Visible = _minimizeToTray;
-            _nsec = _formSetting.textBoxNsec.Text;
             _addClient = _formSetting.checkBoxAddClient.Checked;
+
             _director = _formSetting.textBoxDirector.Text;
-            _replyCommands = [.. _formSetting.textBoxReplyCommands.Text.Split(["\r\n"], StringSplitOptions.RemoveEmptyEntries)];
-            _callCommand = _formSetting.textBoxCallCommand.Text;
-            _openMode = _formSetting.checkBoxOpenMode.Checked;
+            _showOnlyFollowees = _formSetting.checkBoxShowOnlyFollowees.Checked;
+            _usePetname = _formSetting.checkBoxUsePetname.Checked;
             _mentionEveryHour = _formSetting.checkBoxMentionEveryHour.Checked;
             _mentionMinutes = (int)_formSetting.numericUpDownMentionMinutes.Value;
+            _mentionMode = _formSetting.checkBoxMentionMode.Checked;
+            _forceCommands = [.. _formSetting.textBoxForceCommands.Text.Split(["\r\n"], StringSplitOptions.RemoveEmptyEntries)];
+            _callCommands = [.. _formSetting.textBoxCallCommands.Text.Split(["\r\n"], StringSplitOptions.RemoveEmptyEntries)];
+            _openMode = _formSetting.checkBoxOpenMode.Checked;
             _callReplyLimit = (int)_formSetting.numericUpDownCallReplyLimit.Value;
+
+            _nsec = _formSetting.textBoxNsec.Text;
+
             // タイマーの初期化
             SetDailyTimer();
             // スタミナリセット
@@ -999,15 +1026,18 @@ namespace kako
 
             Setting.TopMost = TopMost;
             Setting.Opacity = Opacity;
-            Setting.ShowOnlyFollowees = _showOnlyFollowees;
             Setting.MinimizeToTray = _minimizeToTray;
             Setting.AddClient = _addClient;
+
             Setting.Director = _director;
-            Setting.ReplyCommands = _replyCommands;
-            Setting.CallCommand = _callCommand;
-            Setting.OpenMode = _openMode;
+            Setting.ShowOnlyFollowees = _showOnlyFollowees;
+            Setting.UsePetname = _usePetname;
             Setting.MentionEveryHour = _mentionEveryHour;
             Setting.MentionMinutes = _mentionMinutes;
+            Setting.MentionMode = _mentionMode;
+            Setting.ForceCommands = _forceCommands;
+            Setting.CallCommands = _callCommands;
+            Setting.OpenMode = _openMode;
             Setting.CallReplyLimit = _callReplyLimit;
 
             Setting.Save(_configPath);
@@ -1095,7 +1125,7 @@ namespace kako
                     userName = $"{user.Name}";
                 }
                 // petnameがある場合は📛petnameとする
-                if (!string.IsNullOrEmpty(user.PetName))
+                if (_usePetname && !string.IsNullOrEmpty(user.PetName))
                 {
                     //userName = $"📛{user.PetName}";
                     userName = $"{user.PetName}";
@@ -1568,15 +1598,12 @@ namespace kako
                         LastCreatedAt = DateTimeOffset.MinValue;
                         LatestCreatedAt = DateTimeOffset.MinValue;
                     }
-                    Debug.WriteLine("1 start");
                     bool success = await _formAI.SummarizeNotesAsync();
-                    Debug.WriteLine("1 end");
-                    Debug.WriteLine("2 start");
-                    //await MentionAsync(_formAI.textBoxAnswer.Text);
+                    // 1秒待つ
+                    await Task.Delay(1000);
                     string answerText = string.Empty;
                     Invoke((MethodInvoker)(() => answerText = _formAI.textBoxAnswer.Text));
-                    Debug.WriteLine("2 end");
-                    if (string.IsNullOrEmpty(_director))
+                    if (string.IsNullOrEmpty(_director) || !_mentionMode)
                     {
                         await PostAsync(answerText);
                     }

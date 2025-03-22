@@ -49,15 +49,17 @@
             textBoxDirector = new TextBox();
             label5 = new Label();
             label6 = new Label();
-            textBoxReplyCommands = new TextBox();
+            textBoxForceCommands = new TextBox();
             label7 = new Label();
             checkBoxMentionEveryHour = new CheckBox();
             numericUpDownMentionMinutes = new NumericUpDown();
             label8 = new Label();
-            textBoxCallCommand = new TextBox();
+            textBoxCallCommands = new TextBox();
             checkBoxOpenMode = new CheckBox();
             numericUpDownCallReplyLimit = new NumericUpDown();
             label9 = new Label();
+            checkBoxMentionMode = new CheckBox();
+            checkBoxUsePetname = new CheckBox();
             ((System.ComponentModel.ISupportInitialize)trackBarOpacity).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numericUpDownMentionMinutes).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numericUpDownCallReplyLimit).BeginInit();
@@ -68,13 +70,13 @@
             textBoxNsec.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             textBoxNsec.BorderStyle = BorderStyle.FixedSingle;
             textBoxNsec.ImeMode = ImeMode.Disable;
-            textBoxNsec.Location = new Point(82, 241);
+            textBoxNsec.Location = new Point(115, 279);
             textBoxNsec.MaxLength = 256;
             textBoxNsec.Name = "textBoxNsec";
             textBoxNsec.PasswordChar = '*';
             textBoxNsec.PlaceholderText = "nsec1...";
-            textBoxNsec.Size = new Size(261, 23);
-            textBoxNsec.TabIndex = 10;
+            textBoxNsec.Size = new Size(228, 23);
+            textBoxNsec.TabIndex = 15;
             textBoxNsec.Leave += TextBoxNsec_Leave;
             // 
             // trackBarOpacity
@@ -111,6 +113,8 @@
             // checkBoxAddClient
             // 
             checkBoxAddClient.AutoSize = true;
+            checkBoxAddClient.Checked = true;
+            checkBoxAddClient.CheckState = CheckState.Checked;
             checkBoxAddClient.ForeColor = SystemColors.ControlText;
             checkBoxAddClient.Location = new Point(12, 62);
             checkBoxAddClient.Name = "checkBoxAddClient";
@@ -137,7 +141,7 @@
             linkLabelIcons8.Location = new Point(331, 337);
             linkLabelIcons8.Name = "linkLabelIcons8";
             linkLabelIcons8.Size = new Size(41, 15);
-            linkLabelIcons8.TabIndex = 17;
+            linkLabelIcons8.TabIndex = 19;
             linkLabelIcons8.TabStop = true;
             linkLabelIcons8.Text = "Icons8";
             linkLabelIcons8.LinkClicked += LinkLabelIcons8_LinkClicked;
@@ -154,7 +158,7 @@
             // checkBoxShowOnlyFollowees
             // 
             checkBoxShowOnlyFollowees.AutoSize = true;
-            checkBoxShowOnlyFollowees.Location = new Point(12, 117);
+            checkBoxShowOnlyFollowees.Location = new Point(12, 116);
             checkBoxShowOnlyFollowees.Name = "checkBoxShowOnlyFollowees";
             checkBoxShowOnlyFollowees.Size = new Size(134, 19);
             checkBoxShowOnlyFollowees.TabIndex = 6;
@@ -164,7 +168,7 @@
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(12, 245);
+            label3.Location = new Point(45, 281);
             label3.Name = "label3";
             label3.Size = new Size(64, 15);
             label3.TabIndex = 0;
@@ -177,9 +181,9 @@
             linkLabelVersion.Location = new Point(12, 337);
             linkLabelVersion.Name = "linkLabelVersion";
             linkLabelVersion.Size = new Size(37, 15);
-            linkLabelVersion.TabIndex = 16;
+            linkLabelVersion.TabIndex = 18;
             linkLabelVersion.TabStop = true;
-            linkLabelVersion.Text = "v0.2.9";
+            linkLabelVersion.Text = "v0.3.0";
             linkLabelVersion.LinkClicked += LinkLabelVersion_LinkClicked;
             // 
             // checkBoxMinimizeToTray
@@ -195,7 +199,7 @@
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(12, 272);
+            label2.Location = new Point(48, 310);
             label2.Name = "label2";
             label2.Size = new Size(61, 15);
             label2.TabIndex = 15;
@@ -205,21 +209,21 @@
             // 
             textBoxNpub.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             textBoxNpub.BorderStyle = BorderStyle.FixedSingle;
-            textBoxNpub.Location = new Point(82, 270);
+            textBoxNpub.Location = new Point(115, 308);
             textBoxNpub.Name = "textBoxNpub";
             textBoxNpub.PlaceholderText = "npub1...";
             textBoxNpub.ReadOnly = true;
-            textBoxNpub.Size = new Size(290, 23);
-            textBoxNpub.TabIndex = 12;
+            textBoxNpub.Size = new Size(257, 23);
+            textBoxNpub.TabIndex = 17;
             // 
             // buttonLogOut
             // 
             buttonLogOut.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             buttonLogOut.Image = Properties.Resources.icons8_log_out_16;
-            buttonLogOut.Location = new Point(349, 241);
+            buttonLogOut.Location = new Point(349, 279);
             buttonLogOut.Name = "buttonLogOut";
             buttonLogOut.Size = new Size(23, 23);
-            buttonLogOut.TabIndex = 11;
+            buttonLogOut.TabIndex = 16;
             toolTipLogOut.SetToolTip(buttonLogOut, "Log out");
             buttonLogOut.UseVisualStyleBackColor = true;
             buttonLogOut.Click += ButtonLogOut_Click;
@@ -228,16 +232,16 @@
             // 
             textBoxDirector.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             textBoxDirector.BorderStyle = BorderStyle.FixedSingle;
-            textBoxDirector.Location = new Point(114, 87);
+            textBoxDirector.Location = new Point(115, 87);
             textBoxDirector.Name = "textBoxDirector";
             textBoxDirector.PlaceholderText = "npub1...";
-            textBoxDirector.Size = new Size(258, 23);
+            textBoxDirector.Size = new Size(257, 23);
             textBoxDirector.TabIndex = 5;
             // 
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new Point(12, 89);
+            label5.Location = new Point(21, 89);
             label5.Name = "label5";
             label5.Size = new Size(88, 15);
             label5.TabIndex = 29;
@@ -246,26 +250,26 @@
             // label6
             // 
             label6.AutoSize = true;
-            label6.Location = new Point(11, 144);
+            label6.Location = new Point(12, 171);
             label6.Name = "label6";
             label6.Size = new Size(97, 15);
             label6.TabIndex = 0;
-            label6.Text = "Reply commands";
+            label6.Text = "Force commands";
             // 
-            // textBoxReplyCommands
+            // textBoxForceCommands
             // 
-            textBoxReplyCommands.BorderStyle = BorderStyle.FixedSingle;
-            textBoxReplyCommands.Location = new Point(114, 142);
-            textBoxReplyCommands.Multiline = true;
-            textBoxReplyCommands.Name = "textBoxReplyCommands";
-            textBoxReplyCommands.ScrollBars = ScrollBars.Vertical;
-            textBoxReplyCommands.Size = new Size(258, 64);
-            textBoxReplyCommands.TabIndex = 7;
+            textBoxForceCommands.BorderStyle = BorderStyle.FixedSingle;
+            textBoxForceCommands.Location = new Point(115, 169);
+            textBoxForceCommands.Multiline = true;
+            textBoxForceCommands.Name = "textBoxForceCommands";
+            textBoxForceCommands.ScrollBars = ScrollBars.Vertical;
+            textBoxForceCommands.Size = new Size(149, 49);
+            textBoxForceCommands.TabIndex = 11;
             // 
             // label7
             // 
             label7.AutoSize = true;
-            label7.Location = new Point(212, 301);
+            label7.Location = new Point(223, 142);
             label7.Name = "label7";
             label7.Size = new Size(49, 15);
             label7.TabIndex = 0;
@@ -274,82 +278,110 @@
             // checkBoxMentionEveryHour
             // 
             checkBoxMentionEveryHour.AutoSize = true;
-            checkBoxMentionEveryHour.Location = new Point(12, 300);
+            checkBoxMentionEveryHour.Location = new Point(11, 141);
             checkBoxMentionEveryHour.Name = "checkBoxMentionEveryHour";
-            checkBoxMentionEveryHour.Size = new Size(143, 19);
-            checkBoxMentionEveryHour.TabIndex = 13;
-            checkBoxMentionEveryHour.Text = "Mention every hour at";
+            checkBoxMentionEveryHour.Size = new Size(155, 19);
+            checkBoxMentionEveryHour.TabIndex = 8;
+            checkBoxMentionEveryHour.Text = "Summarize every hour at";
             checkBoxMentionEveryHour.UseVisualStyleBackColor = true;
             // 
             // numericUpDownMentionMinutes
             // 
-            numericUpDownMentionMinutes.Location = new Point(161, 299);
+            numericUpDownMentionMinutes.Location = new Point(172, 140);
             numericUpDownMentionMinutes.Maximum = new decimal(new int[] { 59, 0, 0, 0 });
             numericUpDownMentionMinutes.Name = "numericUpDownMentionMinutes";
             numericUpDownMentionMinutes.Size = new Size(45, 23);
-            numericUpDownMentionMinutes.TabIndex = 14;
+            numericUpDownMentionMinutes.TabIndex = 9;
             numericUpDownMentionMinutes.TextAlign = HorizontalAlignment.Center;
             // 
             // label8
             // 
             label8.AutoSize = true;
-            label8.Location = new Point(12, 214);
+            label8.Location = new Point(22, 226);
             label8.Name = "label8";
-            label8.Size = new Size(82, 15);
+            label8.Size = new Size(87, 15);
             label8.TabIndex = 0;
-            label8.Text = "Call command";
+            label8.Text = "Call commands";
             // 
-            // textBoxCallCommand
+            // textBoxCallCommands
             // 
-            textBoxCallCommand.BorderStyle = BorderStyle.FixedSingle;
-            textBoxCallCommand.Location = new Point(114, 212);
-            textBoxCallCommand.Name = "textBoxCallCommand";
-            textBoxCallCommand.Size = new Size(164, 23);
-            textBoxCallCommand.TabIndex = 8;
+            textBoxCallCommands.BorderStyle = BorderStyle.FixedSingle;
+            textBoxCallCommands.Location = new Point(115, 224);
+            textBoxCallCommands.Multiline = true;
+            textBoxCallCommands.Name = "textBoxCallCommands";
+            textBoxCallCommands.ScrollBars = ScrollBars.Vertical;
+            textBoxCallCommands.Size = new Size(149, 49);
+            textBoxCallCommands.TabIndex = 12;
             // 
             // checkBoxOpenMode
             // 
             checkBoxOpenMode.AutoSize = true;
-            checkBoxOpenMode.Location = new Point(284, 213);
+            checkBoxOpenMode.Location = new Point(270, 225);
             checkBoxOpenMode.Name = "checkBoxOpenMode";
             checkBoxOpenMode.Size = new Size(88, 19);
-            checkBoxOpenMode.TabIndex = 9;
+            checkBoxOpenMode.TabIndex = 13;
             checkBoxOpenMode.Text = "Open mode";
             checkBoxOpenMode.UseVisualStyleBackColor = true;
             // 
             // numericUpDownCallReplyLimit
             // 
-            numericUpDownCallReplyLimit.Location = new Point(327, 299);
+            numericUpDownCallReplyLimit.Location = new Point(325, 250);
             numericUpDownCallReplyLimit.Maximum = new decimal(new int[] { 99, 0, 0, 0 });
             numericUpDownCallReplyLimit.Name = "numericUpDownCallReplyLimit";
-            numericUpDownCallReplyLimit.Size = new Size(45, 23);
-            numericUpDownCallReplyLimit.TabIndex = 15;
+            numericUpDownCallReplyLimit.Size = new Size(47, 23);
+            numericUpDownCallReplyLimit.TabIndex = 14;
             numericUpDownCallReplyLimit.TextAlign = HorizontalAlignment.Center;
             numericUpDownCallReplyLimit.Value = new decimal(new int[] { 10, 0, 0, 0 });
             // 
             // label9
             // 
             label9.AutoSize = true;
-            label9.Location = new Point(272, 301);
+            label9.Location = new Point(270, 252);
             label9.Name = "label9";
             label9.Size = new Size(49, 15);
             label9.TabIndex = 0;
             label9.Text = "Stamina";
+            // 
+            // checkBoxMentionMode
+            // 
+            checkBoxMentionMode.AutoSize = true;
+            checkBoxMentionMode.Checked = true;
+            checkBoxMentionMode.CheckState = CheckState.Checked;
+            checkBoxMentionMode.Location = new Point(278, 141);
+            checkBoxMentionMode.Name = "checkBoxMentionMode";
+            checkBoxMentionMode.Size = new Size(71, 19);
+            checkBoxMentionMode.TabIndex = 10;
+            checkBoxMentionMode.Text = "Mention";
+            checkBoxMentionMode.UseVisualStyleBackColor = true;
+            // 
+            // checkBoxUsePetname
+            // 
+            checkBoxUsePetname.AutoSize = true;
+            checkBoxUsePetname.Checked = true;
+            checkBoxUsePetname.CheckState = CheckState.Checked;
+            checkBoxUsePetname.Location = new Point(152, 116);
+            checkBoxUsePetname.Name = "checkBoxUsePetname";
+            checkBoxUsePetname.Size = new Size(94, 19);
+            checkBoxUsePetname.TabIndex = 7;
+            checkBoxUsePetname.Text = "Use petname";
+            checkBoxUsePetname.UseVisualStyleBackColor = true;
             // 
             // FormSetting
             // 
             AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
             ClientSize = new Size(384, 361);
+            Controls.Add(checkBoxUsePetname);
+            Controls.Add(checkBoxMentionMode);
             Controls.Add(label9);
             Controls.Add(checkBoxOpenMode);
-            Controls.Add(textBoxCallCommand);
+            Controls.Add(textBoxCallCommands);
             Controls.Add(label8);
             Controls.Add(numericUpDownCallReplyLimit);
             Controls.Add(numericUpDownMentionMinutes);
             Controls.Add(checkBoxMentionEveryHour);
             Controls.Add(label7);
-            Controls.Add(textBoxReplyCommands);
+            Controls.Add(textBoxForceCommands);
             Controls.Add(label6);
             Controls.Add(label5);
             Controls.Add(buttonLogOut);
@@ -409,15 +441,17 @@
         internal TextBox textBoxDirector;
         private Label label5;
         private Label label6;
-        internal TextBox textBoxReplyCommands;
+        internal TextBox textBoxForceCommands;
         private Label label7;
         internal CheckBox checkBoxMentionEveryHour;
         internal NumericUpDown numericUpDownMentionMinutes;
         private NumericUpDown numericUpDown1;
         private Label label8;
-        internal TextBox textBoxCallCommand;
+        internal TextBox textBoxCallCommands;
         internal CheckBox checkBoxOpenMode;
         internal NumericUpDown numericUpDownCallReplyLimit;
         private Label label9;
+        internal CheckBox checkBoxMentionMode;
+        internal CheckBox checkBoxUsePetname;
     }
 }
