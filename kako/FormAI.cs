@@ -137,7 +137,6 @@ namespace kako
         private void InitializeModel(string apiKey)
         {
             _model ??= new GenerativeModel(apiKey, textBoxModel.Text);
-            //_model ??= new GenerativeModel(apiKey, "gemini-2.0-flash-exp");
         }
 
         private void DisplayResult(string? result)
@@ -145,8 +144,13 @@ namespace kako
             if (result == null)
             {
                 textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = "電波が悪いみたいです。"));
-                IsInitialized = false;
-                checkBoxInitialized.Invoke((MethodInvoker)(() => checkBoxInitialized.Checked = IsInitialized));
+                //IsInitialized = false;
+                //checkBoxInitialized.Invoke((MethodInvoker)(() => checkBoxInitialized.Checked = IsInitialized));
+                if (MainForm != null)
+                {
+                    MainForm.LastCreatedAt = DateTimeOffset.MinValue;
+                    MainForm.LatestCreatedAt = DateTimeOffset.MinValue;
+                }
 
             }
             else

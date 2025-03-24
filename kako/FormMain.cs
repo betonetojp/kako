@@ -141,7 +141,7 @@ namespace kako
             _minimizeToTray = Setting.MinimizeToTray;
             notifyIcon.Visible = _minimizeToTray;
             _addClient = Setting.AddClient;
-            
+
             _director = Setting.Director;
             _showOnlyFollowees = Setting.ShowOnlyFollowees;
             _usePetname = Setting.UsePetname;
@@ -430,6 +430,20 @@ namespace kako
                                                 _formAI.checkBoxInitialized.Checked = false;
                                                 continue;
                                             }
+                                            // スタートコマンド
+                                            if (content == "start")
+                                            {
+                                                await PostAsync("定期投稿を有効にしました。", nostrEvent);
+                                                _mentionEveryHour = true;
+                                                continue;
+                                            }
+                                            // ストップコマンド
+                                            if (content == "stop")
+                                            {
+                                                await PostAsync("定期投稿を無効にしました。", nostrEvent);
+                                                _mentionEveryHour = false;
+                                                continue;
+                                            }
                                         }
                                     }
 
@@ -442,6 +456,8 @@ namespace kako
                                             LatestCreatedAt = DateTimeOffset.MinValue;
                                         }
                                         bool success = await _formAI.SummarizeNotesAsync();
+                                        // 1秒待つ
+                                        await Task.Delay(1000);
                                         await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
                                         if (success)
                                         {
@@ -455,7 +471,6 @@ namespace kako
 
                                 if (_openMode || nostrEvent.PublicKey == whoToNotify)
                                 {
-                                    bool success;
                                     // 呼出コマンド
                                     if (_callCommands.Contains(content))
                                     {
@@ -465,26 +480,24 @@ namespace kako
                                         }
                                         else
                                         {
-                                            success = await _formAI.SendMessageAsync(GetUserName(nostrEvent.PublicKey) + "さんが呼んでいます。返事をしてください。");
-                                            if (success)
-                                            {
-                                                await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
-                                                _callReplyCount++;
-                                            }
+                                            await _formAI.SendMessageAsync(GetUserName(nostrEvent.PublicKey) + "さんが呼んでいます。返事をしてください。");
+                                            // 1秒待つ
+                                            await Task.Delay(1000);
+                                            await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
+                                            _callReplyCount++;
 
                                             if (_callReplyCount >= _callReplyLimit)
                                             {
-                                                success = await _formAI.SendMessageAsync("疲れたからしばらく休むことを宣言ください。");
-                                                if (success)
+                                                await _formAI.SendMessageAsync("疲れたからしばらく休むことを宣言ください。");
+                                                // 1秒待つ
+                                                await Task.Delay(1000);
+                                                if (_openMode)
                                                 {
-                                                    if (_openMode)
-                                                    {
-                                                        await PostAsync(_formAI.textBoxAnswer.Text);
-                                                    }
-                                                    else
-                                                    {
-                                                        await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
-                                                    }
+                                                    await PostAsync(_formAI.textBoxAnswer.Text);
+                                                }
+                                                else
+                                                {
+                                                    await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
                                                 }
                                                 _alreadyPostedBreakMessage = true;
                                                 Debug.WriteLine("スタミナが切れました。");
@@ -509,26 +522,24 @@ namespace kako
                                                 else
                                                 {
                                                     string promptForReply = _formAI.textBoxPromptForReply.Text;
-                                                    success = await _formAI.SendMessageAsync(promptForReply + "\r\n" + GetUserName(nostrEvent.PublicKey) + "さんからの返信：\r\n" + content);
-                                                    if (success)
-                                                    {
-                                                        await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
-                                                        _callReplyCount++;
-                                                    }
+                                                    await _formAI.SendMessageAsync(promptForReply + "\r\n" + GetUserName(nostrEvent.PublicKey) + "さんからの返信：\r\n" + content);
+                                                    // 1秒待つ
+                                                    await Task.Delay(1000);
+                                                    await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
+                                                    _callReplyCount++;
 
                                                     if (_callReplyCount >= _callReplyLimit)
                                                     {
-                                                        success = await _formAI.SendMessageAsync("疲れたからしばらく休むことを宣言ください。");
-                                                        if (success)
+                                                        await _formAI.SendMessageAsync("疲れたからしばらく休むことを宣言ください。");
+                                                        // 1秒待つ
+                                                        await Task.Delay(1000);
+                                                        if (_openMode)
                                                         {
-                                                            if (_openMode)
-                                                            {
-                                                                await PostAsync(_formAI.textBoxAnswer.Text);
-                                                            }
-                                                            else
-                                                            {
-                                                                await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
-                                                            }
+                                                            await PostAsync(_formAI.textBoxAnswer.Text);
+                                                        }
+                                                        else
+                                                        {
+                                                            await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
                                                         }
                                                         _alreadyPostedBreakMessage = true;
                                                         Debug.WriteLine("スタミナが切れました。");
@@ -797,7 +808,7 @@ namespace kako
             var newEvent = new NostrEvent()
             {
                 Kind = 1,
-                Content = "nostr:" + _director + " " +  content.Replace("\r\n", "\n"),
+                Content = "nostr:" + _director + " " + content.Replace("\r\n", "\n"),
                 Tags = tags
             };
 

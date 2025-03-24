@@ -23,5 +23,7 @@ Tiny nostr summary bot client for windows.
 - 「Force commands」「Call commands」は改行で複数のコマンドを設定できます。
 - F5キーで開くGemini画面でbotに投稿させずにまとめのテストやbotとのチャットを行うことができます。
 - reset と返信すると「Initialized」を外し、次回まとめ投稿前に「Model」と「Initial prompt」を再読み込みします。(Director専用)
+- start と返信すると「Summarize every hour at xx minutes」を有効にします。(Director専用)
+- stop と返信すると「Summarize every hour at xx minutes」を無効にします。(Director専用)
 - 「Stamina」は毎時xx分にまとめを投稿した際と設定画面を開閉した時にリセットされます。
-- 「Director's npub」が設定されていないと「Reply commands」や reset に反応しません。
+- 「Director's npub」が設定されていないとDirector専用コマンドに反応しません。
