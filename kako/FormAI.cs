@@ -143,7 +143,7 @@ namespace kako
         {
             if (result == null)
             {
-                textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = "電波が悪いみたいです。"));
+                textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = "＊ 通信異常が発生しました ＊"));
                 //IsInitialized = false;
                 //checkBoxInitialized.Invoke((MethodInvoker)(() => checkBoxInitialized.Checked = IsInitialized));
                 if (MainForm != null)

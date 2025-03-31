@@ -426,22 +426,45 @@ namespace kako
                                             // リセットコマンド
                                             if (content == "reset")
                                             {
-                                                await PostAsync("AIをリセットしました。", nostrEvent);
+                                                await PostAsync("＊ AIをリセットしました ＊", nostrEvent);
                                                 _formAI.checkBoxInitialized.Checked = false;
+                                                await SummarizeAndPostAsync();
+                                                // スタミナリセット
+                                                _callReplyCount = 0;
+                                                _alreadyPostedBreakMessage = false;
                                                 continue;
                                             }
                                             // スタートコマンド
                                             if (content == "start")
                                             {
-                                                await PostAsync("定期投稿を有効にしました。", nostrEvent);
+                                                await PostAsync("＊ 定期投稿を有効にしました ＊", nostrEvent);
                                                 _mentionEveryHour = true;
                                                 continue;
                                             }
                                             // ストップコマンド
                                             if (content == "stop")
                                             {
-                                                await PostAsync("定期投稿を無効にしました。", nostrEvent);
+                                                await PostAsync("＊ 定期投稿を無効にしました ＊", nostrEvent);
                                                 _mentionEveryHour = false;
+                                                continue;
+                                            }
+
+                                            // オープンコマンド
+                                            if (content == "open")
+                                            {
+                                                _openMode = true;
+                                                await PostAsync("＊ 返信応答を有効にしました ＊", nostrEvent);
+                                                // スタミナリセット
+                                                _callReplyCount = 0;
+                                                _alreadyPostedBreakMessage = false;
+                                                continue;
+                                            }
+
+                                            // クローズコマンド
+                                            if (content == "close")
+                                            {
+                                                _openMode = false;
+                                                await PostAsync("＊ 返信応答を無効にしました ＊", nostrEvent);
                                                 continue;
                                             }
                                         }
@@ -1604,30 +1627,7 @@ namespace kako
                 // 定時まとめメンション
                 if (_mentionEveryHour)
                 {
-                    if (!_formAI.IsInitialized)
-                    {
-                        LastCreatedAt = DateTimeOffset.MinValue;
-                        LatestCreatedAt = DateTimeOffset.MinValue;
-                    }
-                    bool success = await _formAI.SummarizeNotesAsync();
-                    // 1秒待つ
-                    await Task.Delay(1000);
-                    string answerText = string.Empty;
-                    Invoke((MethodInvoker)(() => answerText = _formAI.textBoxAnswer.Text));
-                    if (string.IsNullOrEmpty(_director) || !_mentionMode)
-                    {
-                        await PostAsync(answerText);
-                    }
-                    else
-                    {
-                        await MentionAsync(answerText);
-                    }
-                    if (success)
-                    {
-                        dataGridViewNotes.Invoke((MethodInvoker)(() => dataGridViewNotes.Rows.Clear()));
-                        GC.Collect();
-                        GC.WaitForPendingFinalizers();
-                    }
+                    await SummarizeAndPostAsync();
                 }
 
                 // 投稿後に labelRelays.Text と toolTipRelays を元に戻す
@@ -1664,6 +1664,35 @@ namespace kako
 
             // タイマーの再設定
             SetDailyTimer();
+        }
+
+        // まとめ投稿
+        private async Task SummarizeAndPostAsync()
+        {
+            if (!_formAI.IsInitialized)
+            {
+                LastCreatedAt = DateTimeOffset.MinValue;
+                LatestCreatedAt = DateTimeOffset.MinValue;
+            }
+            bool success = await _formAI.SummarizeNotesAsync();
+            // 1秒待つ
+            await Task.Delay(1000);
+            string answerText = string.Empty;
+            Invoke((MethodInvoker)(() => answerText = _formAI.textBoxAnswer.Text));
+            if (string.IsNullOrEmpty(_director) || !_mentionMode)
+            {
+                await PostAsync(answerText);
+            }
+            else
+            {
+                await MentionAsync(answerText);
+            }
+            if (success)
+            {
+                dataGridViewNotes.Invoke((MethodInvoker)(() => dataGridViewNotes.Rows.Clear()));
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+            }
         }
         #endregion
     }

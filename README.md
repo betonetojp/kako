@@ -13,8 +13,8 @@ Tiny nostr summary bot client for windows.
 - 「Force commands」にbotが反応するコマンドを入力してください。
 - 「Force commands」に設定したコマンドを投稿すると、botが前回実施以降のタイムラインのまとめを投稿します。(Director専用)
 - 「Call commands」にbotを呼び出すコマンドを入力してください。
-- 「Open mode」を有効にすると、誰の返信にも反応します。
-- 「Stamina」で返信に反応する上限回数を設定できます。
+- 「Open mode」を有効にすると、あなた以外の返信にも応答します。
+- 「Stamina」で返信に応答する上限回数を設定できます。
 - 返信するとGeminiに「Chat」を送信し、結果を返信投稿します。
 - 
 
@@ -25,5 +25,7 @@ Tiny nostr summary bot client for windows.
 - reset と返信すると「Initialized」を外し、次回まとめ投稿前に「Model」と「Initial prompt」を再読み込みします。(Director専用)
 - start と返信すると「Summarize every hour at xx minutes」を有効にします。(Director専用)
 - stop と返信すると「Summarize every hour at xx minutes」を無効にします。(Director専用)
+- open と返信すると「Open mode」を有効にします。(Director専用)
+- close と返信すると「Open mode」を無効にします。(Director専用)
 - 「Stamina」は毎時xx分にまとめを投稿した際と設定画面を開閉した時にリセットされます。
 - 「Director's npub」が設定されていないとDirector専用コマンドに反応しません。
