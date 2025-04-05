@@ -183,7 +183,7 @@
             linkLabelVersion.Size = new Size(37, 15);
             linkLabelVersion.TabIndex = 18;
             linkLabelVersion.TabStop = true;
-            linkLabelVersion.Text = "v0.3.2";
+            linkLabelVersion.Text = "v0.3.3";
             linkLabelVersion.LinkClicked += LinkLabelVersion_LinkClicked;
             // 
             // checkBoxMinimizeToTray

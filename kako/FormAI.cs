@@ -1,5 +1,4 @@
-﻿using GenerativeAI.Methods;
-using GenerativeAI.Models;
+﻿using GenerativeAI;
 using GenerativeAI.Types;
 using System.Diagnostics;
 
@@ -61,7 +60,7 @@ namespace kako
                 var notesContent = MainForm.GetNotesContent();
                 if (!IsInitialized)
                 {
-                    _chat = _model?.StartChat(new StartChatParams());
+                    _chat = _model?.StartChat();
                     IsInitialized = true;
                     checkBoxInitialized.Invoke((MethodInvoker)(() => checkBoxInitialized.Checked = IsInitialized));
                     notesContent = textBoxPrompt.Invoke(() => textBoxPrompt.Text)
@@ -76,10 +75,10 @@ namespace kako
 
                 if (_chat != null)
                 {
-                    string? result = null;
+                    var result = new GenerateContentResponse();
                     try
                     {
-                        result = await _chat.SendMessageAsync(notesContent);
+                        result = await _chat.GenerateContentAsync(notesContent);
                         success = true;
                     }
                     catch (Exception ex)
@@ -88,7 +87,7 @@ namespace kako
                     }
                     finally
                     {
-                        DisplayResult(result);
+                        DisplayResult(result.Text());
                     }
                 }
             }
@@ -108,16 +107,16 @@ namespace kako
 
             if (!IsInitialized)
             {
-                _chat = _model?.StartChat(new StartChatParams());
+                _chat = _model?.StartChat();
             }
 
             bool success = false;
             if (_chat != null)
             {
-                string? result = null;
+                var result = new GenerateContentResponse();
                 try
                 {
-                    result = await _chat.SendMessageAsync(message);
+                    result = await _chat.GenerateContentAsync(message);
                     success = true;
                 }
                 catch (Exception ex)
@@ -126,7 +125,7 @@ namespace kako
                 }
                 finally
                 {
-                    DisplayResult(result);
+                    DisplayResult(result.Text());
                     textBoxChat.Text = string.Empty;
                     textBoxChat.Focus();
                 }
@@ -137,6 +136,7 @@ namespace kako
         private void InitializeModel(string apiKey)
         {
             _model ??= new GenerativeModel(apiKey, textBoxModel.Text);
+            _model.UseGoogleSearch = true;
         }
 
         private void DisplayResult(string? result)
