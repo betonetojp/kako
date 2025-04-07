@@ -481,7 +481,7 @@ namespace kako
                                         bool success = await _formAI.SummarizeNotesAsync();
                                         // 1秒待つ
                                         await Task.Delay(1000);
-                                        await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
+                                        await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'), nostrEvent);
                                         if (success)
                                         {
                                             dataGridViewNotes.Rows.Clear();
@@ -506,7 +506,7 @@ namespace kako
                                             await _formAI.SendMessageAsync(GetUserName(nostrEvent.PublicKey) + "さんが呼んでいます。返事をしてください。");
                                             // 1秒待つ
                                             await Task.Delay(1000);
-                                            await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
+                                            await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'), nostrEvent);
                                             _callReplyCount++;
 
                                             if (_callReplyCount >= _callReplyLimit)
@@ -516,11 +516,11 @@ namespace kako
                                                 await Task.Delay(1000);
                                                 if (_openMode)
                                                 {
-                                                    await PostAsync(_formAI.textBoxAnswer.Text);
+                                                    await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'));
                                                 }
                                                 else
                                                 {
-                                                    await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
+                                                    await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'), nostrEvent);
                                                 }
                                                 _alreadyPostedBreakMessage = true;
                                                 Debug.WriteLine("スタミナが切れました。");
@@ -548,7 +548,7 @@ namespace kako
                                                     await _formAI.SendMessageAsync(promptForReply + "\r\n" + GetUserName(nostrEvent.PublicKey) + "さんからの返信：\r\n" + content);
                                                     // 1秒待つ
                                                     await Task.Delay(1000);
-                                                    await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
+                                                    await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'), nostrEvent);
                                                     _callReplyCount++;
 
                                                     if (_callReplyCount >= _callReplyLimit)
@@ -558,11 +558,11 @@ namespace kako
                                                         await Task.Delay(1000);
                                                         if (_openMode)
                                                         {
-                                                            await PostAsync(_formAI.textBoxAnswer.Text);
+                                                            await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'));
                                                         }
                                                         else
                                                         {
-                                                            await PostAsync(_formAI.textBoxAnswer.Text, nostrEvent);
+                                                            await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'), nostrEvent);
                                                         }
                                                         _alreadyPostedBreakMessage = true;
                                                         Debug.WriteLine("スタミナが切れました。");
@@ -1678,7 +1678,7 @@ namespace kako
             // 1秒待つ
             await Task.Delay(1000);
             string answerText = string.Empty;
-            Invoke((MethodInvoker)(() => answerText = _formAI.textBoxAnswer.Text));
+            Invoke((MethodInvoker)(() => answerText = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n')));
             if (string.IsNullOrEmpty(_director) || !_mentionMode)
             {
                 await PostAsync(answerText);
