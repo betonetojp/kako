@@ -29,3 +29,10 @@ Tiny nostr summary bot client for windows.
 - close と返信すると「Open mode」を無効にします。(Director専用)
 - 「Stamina」は毎時xx分にまとめを投稿した際と設定画面を開閉した時にリセットされます。
 - 「Director's npub」が設定されていないとDirector専用コマンドに反応しません。
+
+## 利用NuGetパッケージ
+- [CredentialManagement](https://www.nuget.org/packages/CredentialManagement)
+- [Google_GenerativeAI](https://www.nuget.org/packages/Google_GenerativeAI)
+
+## Nostrクライアントライブラリ
+- [NNostr](https://github.com/Kukks/NNostr) 内のNNostr.Client Ver0.0.49を一部変更して利用しています。
