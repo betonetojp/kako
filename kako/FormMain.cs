@@ -341,7 +341,9 @@ namespace kako
                         continue;
                     }
 
-                    var content = nostrEvent.Content;
+                    //var content = nostrEvent.Content;
+                    // 500文字以上は切り捨て
+                    var content = nostrEvent.Content?.Substring(0, Math.Min(500, nostrEvent.Content.Length));
                     if (content != null)
                     {
                         string userName = string.Empty;
