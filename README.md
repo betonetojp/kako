@@ -16,10 +16,9 @@ Tiny nostr summary bot client for windows.
 - 「Open mode」を有効にすると、あなた以外の返信にも応答します。
 - 「Stamina」で返信に応答する上限回数を設定できます。
 - 返信するとGeminiに「Chat」を送信し、結果を返信投稿します。
-- 
 
 ## Tips
-- botのnsecはnostterをシークレットウィンドウで開くと手軽に作成できます。
+- botのnsecは[nostter](https://nostter.app)をシークレットウィンドウで開くと手軽に作成できます。
 - 「Force commands」「Call commands」は改行で複数のコマンドを設定できます。
 - F5キーで開くGemini画面でbotに投稿させずにまとめのテストやbotとのチャットを行うことができます。
 - reset と返信すると「Initialized」を外し、次回まとめ投稿前に「Model」と「Initial prompt」を再読み込みします。(Director専用)
