@@ -23,6 +23,15 @@ namespace kako
             {
                 textBoxModel.Text = "gemini-2.0-flash";
             }
+            // _chatSessionBackUpDataがnullじゃない時はモデルを作成してIsInitializedをtrueにする
+            if (_chatSessionBackUpData != null)
+            {
+                var apiKey = textBoxApiKey.Text;
+                InitializeModel(apiKey);
+                _chat = _model?.StartChat(_chatSessionBackUpData);
+                IsInitialized = true;
+                checkBoxInitialized.Checked = IsInitialized;
+            }
         }
 
         private async void ButtonSummarize_Click(object sender, EventArgs e)
@@ -34,6 +43,8 @@ namespace kako
                     MainForm.LastCreatedAt = DateTimeOffset.MinValue;
                     MainForm.LatestCreatedAt = DateTimeOffset.MinValue;
                 }
+
+                _chatSessionBackUpData = null;
             }
             await SummarizeNotesAsync();
         }
@@ -63,14 +74,15 @@ namespace kako
                 {
                     if (_chatSessionBackUpData != null)
                     {
+                        //var history = _chatSessionBackUpData.History;
+                        //// historyを最新10件にする
+                        //if (history != null && history.Count > 10)
+                        //{
+                        //    history = history.Skip(history.Count - 10).ToList();
+                        //    _chatSessionBackUpData.History = history;
+                        //}
+
                         // チャットセッションのバックアップデータがある場合は復元
-                        var history = _chatSessionBackUpData.History;
-                        // historyを最新10件にする
-                        if (history != null && history.Count > 10)
-                        {
-                            history = history.Skip(history.Count - 10).ToList();
-                            _chatSessionBackUpData.History = history;
-                        }
                         _chat = _model?.StartChat(_chatSessionBackUpData);
                     }
                     else
@@ -96,6 +108,7 @@ namespace kako
                     try
                     {
                         result = await _chat.GenerateContentAsync(notesContent);
+                        SaveAISettings();
                         success = true;
                     }
                     catch (Exception ex)
@@ -143,6 +156,7 @@ namespace kako
                 try
                 {
                     result = await _chat.GenerateContentAsync(message);
+                    SaveAISettings();
                     success = true;
                 }
                 catch (Exception ex)
@@ -161,8 +175,20 @@ namespace kako
 
         private void InitializeModel(string apiKey)
         {
-            _model ??= new GenerativeModel(apiKey, textBoxModel.Text);
-            _model.UseGoogleSearch = true;
+            try
+            {
+                _model ??= new GenerativeModel(apiKey, textBoxModel.Text);
+                _model.UseGoogleSearch = true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                if (MainForm != null)
+                {
+                    MainForm.LastCreatedAt = DateTimeOffset.MinValue;
+                    MainForm.LatestCreatedAt = DateTimeOffset.MinValue;
+                }
+            }
         }
 
         private void DisplayResult(string? result)
@@ -290,10 +316,10 @@ namespace kako
 
         private void FormAI_Shown(object sender, EventArgs e)
         {
-            if (!string.IsNullOrEmpty(textBoxApiKey.Text))
-            {
-                _ = SummarizeNotesAsync();
-            }
+            //if (!string.IsNullOrEmpty(textBoxApiKey.Text))
+            //{
+            //    _ = SummarizeNotesAsync();
+            //}
             // モーダル解除
             //Close();
             Hide();

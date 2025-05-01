@@ -1570,7 +1570,7 @@ namespace kako
                     }
                     notes.Append(row.Cells["time"].Value?.ToString() + "\r\n");
                     notes.Append(row.Cells["name"].Value?.ToString()?.Substring(2) + "\r\n");
-                    notes.Append(row.Cells["note"].Value?.ToString() + "\r\n\r\n");
+                    notes.Append(row.Cells["note"].Value?.ToString() + "\r\n");
                     notes.AppendLine();
                     count++;
                 }
