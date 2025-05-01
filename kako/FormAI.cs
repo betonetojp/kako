@@ -23,7 +23,7 @@ namespace kako
             {
                 textBoxModel.Text = "gemini-2.0-flash";
             }
-            // _chatSessionBackUpDataがnullじゃない時はモデルを作成してIsInitializedをtrueにする
+            // _chatSessionBackUpDataがある時はモデルを作成してIsInitializedをtrueにする
             if (_chatSessionBackUpData != null)
             {
                 var apiKey = textBoxApiKey.Text;
@@ -43,8 +43,6 @@ namespace kako
                     MainForm.LastCreatedAt = DateTimeOffset.MinValue;
                     MainForm.LatestCreatedAt = DateTimeOffset.MinValue;
                 }
-
-                _chatSessionBackUpData = null;
             }
             await SummarizeNotesAsync();
         }
@@ -66,6 +64,7 @@ namespace kako
                 if (!IsInitialized)
                 {
                     _model = null;
+                    _chatSessionBackUpData = null;
                 }
                 InitializeModel(apiKey);
 
