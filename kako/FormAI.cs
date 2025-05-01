@@ -11,6 +11,7 @@ namespace kako
         private GenerativeModel? _model;
         private ChatSession? _chat;
         internal bool IsInitialized = false;
+        private ChatSessionBackUpData? _chatSessionBackUpData;
 
         public FormAI()
         {
@@ -60,7 +61,23 @@ namespace kako
                 var notesContent = MainForm.GetNotesContent();
                 if (!IsInitialized)
                 {
-                    _chat = _model?.StartChat();
+                    if (_chatSessionBackUpData != null)
+                    {
+                        // チャットセッションのバックアップデータがある場合は復元
+                        var history = _chatSessionBackUpData.History;
+                        // historyを最新10件にする
+                        if (history != null && history.Count > 10)
+                        {
+                            history = history.Skip(history.Count - 10).ToList();
+                            _chatSessionBackUpData.History = history;
+                        }
+                        _chat = _model?.StartChat(_chatSessionBackUpData);
+                    }
+                    else
+                    {
+                        // チャットセッションのバックアップデータがない場合は新規作成
+                        _chat = _model?.StartChat();
+                    }
                     IsInitialized = true;
                     checkBoxInitialized.Invoke((MethodInvoker)(() => checkBoxInitialized.Checked = IsInitialized));
                     notesContent = textBoxPrompt.Invoke(() => textBoxPrompt.Text)
@@ -107,7 +124,16 @@ namespace kako
 
             if (!IsInitialized)
             {
-                _chat = _model?.StartChat();
+                if (_chatSessionBackUpData != null)
+                {
+                    // チャットセッションのバックアップデータがある場合は復元
+                    _chat = _model?.StartChat(_chatSessionBackUpData);
+                }
+                else
+                {
+                    // チャットセッションのバックアップデータがない場合は新規作成
+                    _chat = _model?.StartChat();
+                }
             }
 
             bool success = false;
@@ -200,6 +226,15 @@ namespace kako
                 PromptForReply = textBoxPromptForReply.Text
             };
             Tools.SaveAISettings(settings);
+
+            // チャットセッションのバックアップデータがある場合は保存
+            if (_chat != null)
+            {
+                _chatSessionBackUpData = _chat.CreateChatSessionBackUpData();
+
+                // csをJSON形式で保存
+                Tools.SaveChatSession(_chatSessionBackUpData);
+            }
         }
 
         private void LoadAISettings()
@@ -210,6 +245,9 @@ namespace kako
             textBoxPrompt.Text = settings.Prompt;
             textBoxPromptForEveryMessage.Text = settings.PromptForEveryMessage;
             textBoxPromptForReply.Text = settings.PromptForReply;
+
+            // チャットセッションの復元
+            _chatSessionBackUpData = Tools.LoadChatSession();
         }
 
         private void CheckBoxInitialized_CheckedChanged(object sender, EventArgs e)

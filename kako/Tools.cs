@@ -1,4 +1,5 @@
 ﻿using CredentialManagement;
+using GenerativeAI.Types;
 using NBitcoin.Secp256k1;
 using NNostr.Client;
 using NNostr.Client.JsonConverters;
@@ -73,6 +74,7 @@ namespace kako
         private static readonly string _emojisJsonPath = Path.Combine(Application.StartupPath, "emojis.json");
         private static readonly string _clientsJsonPath = Path.Combine(Application.StartupPath, "clients.json");
         private static readonly string _aiJsonPath = Path.Combine(Application.StartupPath, "AI.json");
+        private static readonly string _chatSessionPath = Path.Combine(Application.StartupPath, "chatSession.json");
 
         private static JsonSerializerOptions GetOption()
         {
@@ -329,6 +331,41 @@ namespace kako
             {
                 Debug.WriteLine(e.Message);
                 return [];
+            }
+        }
+        #endregion
+
+        #region チャットセッション
+        internal static void SaveChatSession(ChatSessionBackUpData session)
+        {
+            try
+            {
+                var jsonContent = JsonSerializer.Serialize(session, GetOption());
+                File.WriteAllText(_chatSessionPath, jsonContent);
+            }
+            catch (JsonException e)
+            {
+                Debug.WriteLine(e.Message);
+            }
+        }
+
+        internal static ChatSessionBackUpData? LoadChatSession()
+        {
+            // chatSession.jsonを読み込み
+            if (!File.Exists(_chatSessionPath))
+            {
+                return null;
+            }
+            try
+            {
+                var jsonContent = File.ReadAllText(_chatSessionPath);
+                var session = JsonSerializer.Deserialize<ChatSessionBackUpData>(jsonContent, GetOption());
+                return session ?? new ChatSessionBackUpData();
+            }
+            catch (JsonException e)
+            {
+                Debug.WriteLine(e.Message);
+                return null;
             }
         }
         #endregion
