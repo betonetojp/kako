@@ -1,6 +1,7 @@
 ﻿using GenerativeAI;
 using GenerativeAI.Types;
 using System.Diagnostics;
+using System.Linq;
 
 namespace kako
 {
@@ -73,14 +74,6 @@ namespace kako
                 {
                     if (_chatSessionBackUpData != null)
                     {
-                        //var history = _chatSessionBackUpData.History;
-                        //// historyを最新10件にする
-                        //if (history != null && history.Count > 10)
-                        //{
-                        //    history = history.Skip(history.Count - 10).ToList();
-                        //    _chatSessionBackUpData.History = history;
-                        //}
-
                         // チャットセッションのバックアップデータがある場合は復元
                         _chat = _model?.StartChat(_chatSessionBackUpData);
                     }
@@ -90,16 +83,32 @@ namespace kako
                         _chat = _model?.StartChat();
                     }
                     IsInitialized = true;
+
                     checkBoxInitialized.Invoke((MethodInvoker)(() => checkBoxInitialized.Checked = IsInitialized));
-                    notesContent = textBoxPrompt.Invoke(() => textBoxPrompt.Text)
-                                 + textBoxPromptForEveryMessage.Invoke(() => textBoxPromptForEveryMessage.Text)
-                                 + notesContent;
+                    var initioalPrompt = textBoxPrompt.Invoke(() => textBoxPrompt.Text);
+
+                    if (_chat != null)
+                    {
+                        var result = new GenerateContentResponse();
+                        try
+                        {
+                            result = await _chat.GenerateContentAsync(initioalPrompt);
+                            SaveAISettings();
+                            success = true;
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine(ex.Message);
+                        }
+                        finally
+                        {
+                            DisplayResult(result.Text());
+                        }
+                    }
                 }
-                else
-                {
-                    notesContent = textBoxPromptForEveryMessage.Invoke(() => textBoxPromptForEveryMessage.Text)
-                                 + notesContent;
-                }
+
+                notesContent = textBoxPromptForEveryMessage.Invoke(() => textBoxPromptForEveryMessage.Text)
+                             + notesContent;
 
                 if (_chat != null)
                 {
@@ -107,6 +116,17 @@ namespace kako
                     try
                     {
                         result = await _chat.GenerateContentAsync(notesContent);
+
+                        var history = _chat.History;
+                        // historyを最初の2件は保持して最新の設定ターン数をその後に追加
+                        if (history != null && history.Count > 2 + (int)numericUpDownTurns.Value * 2)
+                        {
+                            var firstTwo = history.Take(2).ToList(); // 最初の2件を保持
+                            var latestTen = history.Skip(history.Count - (int)numericUpDownTurns.Value * 2).ToList();
+                            history = firstTwo.Concat(latestTen).ToList();
+                            _chat.History = history;
+                        }
+
                         SaveAISettings();
                         success = true;
                     }
@@ -131,6 +151,7 @@ namespace kako
             if (!IsInitialized)
             {
                 _model = null;
+                _chatSessionBackUpData = null;
             }
             InitializeModel(apiKey);
 
@@ -155,6 +176,17 @@ namespace kako
                 try
                 {
                     result = await _chat.GenerateContentAsync(message);
+
+                    var history = _chat.History;
+                    // historyを最初の2件は保持して最新の設定ターン数をその後に追加
+                    if (history != null && history.Count > 2 + (int)numericUpDownTurns.Value * 2)
+                    {
+                        var firstTwo = history.Take(2).ToList(); // 最初の2件を保持
+                        var latestTen = history.Skip(history.Count - (int)numericUpDownTurns.Value * 2).ToList();
+                        history = firstTwo.Concat(latestTen).ToList();
+                        _chat.History = history;
+                    }
+
                     SaveAISettings();
                     success = true;
                 }
@@ -202,7 +234,6 @@ namespace kako
                     MainForm.LastCreatedAt = DateTimeOffset.MinValue;
                     MainForm.LatestCreatedAt = DateTimeOffset.MinValue;
                 }
-
             }
             else
             {
@@ -245,6 +276,7 @@ namespace kako
             var settings = new AISettings
             {
                 NumberOfPosts = (int)numericUpDownNumberOfPosts.Value,
+                Turns = (int)numericUpDownTurns.Value,
                 Model = textBoxModel.Text,
                 Prompt = textBoxPrompt.Text,
                 PromptForEveryMessage = textBoxPromptForEveryMessage.Text,
@@ -265,7 +297,16 @@ namespace kako
         private void LoadAISettings()
         {
             var settings = Tools.LoadAISettings();
+            if (settings.NumberOfPosts < 1)
+            {
+                settings.NumberOfPosts = 1000;
+            }
+            if (settings.Turns < 1)
+            {
+                settings.Turns = 50;
+            }
             numericUpDownNumberOfPosts.Value = settings.NumberOfPosts;
+            numericUpDownTurns.Value = settings.Turns;
             textBoxModel.Text = settings.Model;
             textBoxPrompt.Text = settings.Prompt;
             textBoxPromptForEveryMessage.Text = settings.PromptForEveryMessage;
