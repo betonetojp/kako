@@ -389,7 +389,7 @@ namespace kako
         {
             AISettings defaultSettings = new AISettings();
             defaultSettings.NumberOfPosts = 1000;
-            defaultSettings.Turns = 50;
+            defaultSettings.Turns = 30;
             defaultSettings.Model = "gemini-2.0-flash";
             defaultSettings.Prompt =
             "あなたの名前は「おもち」です。口数は少ないです。\r\n" +
