@@ -326,7 +326,7 @@ namespace kako
                 }
                 if (settings.Turns < 1)
                 {
-                    settings.Turns = 50;
+                    settings.Turns = 30;
                 }
                 numericUpDownNumberOfPosts.Value = settings.NumberOfPosts;
                 numericUpDownTurns.Value = settings.Turns;

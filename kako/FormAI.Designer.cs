@@ -252,7 +252,7 @@
             numericUpDownTurns.Size = new Size(46, 23);
             numericUpDownTurns.TabIndex = 9;
             numericUpDownTurns.TextAlign = HorizontalAlignment.Right;
-            numericUpDownTurns.Value = new decimal(new int[] { 50, 0, 0, 0 });
+            numericUpDownTurns.Value = new decimal(new int[] { 30, 0, 0, 0 });
             // 
             // label7
             // 
