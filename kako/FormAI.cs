@@ -37,20 +37,34 @@ namespace kako
 
         private async void ButtonSummarize_Click(object sender, EventArgs e)
         {
-            if (!IsInitialized)
+            try
             {
-                if (MainForm != null)
+                if (!IsInitialized)
                 {
-                    MainForm.LastCreatedAt = DateTimeOffset.MinValue;
-                    MainForm.LatestCreatedAt = DateTimeOffset.MinValue;
+                    if (MainForm != null)
+                    {
+                        MainForm.LastCreatedAt = DateTimeOffset.MinValue;
+                        MainForm.LatestCreatedAt = DateTimeOffset.MinValue;
+                    }
                 }
+                await SummarizeNotesAsync();
             }
-            await SummarizeNotesAsync();
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
         }
 
         private async void ButtonChat_Click(object sender, EventArgs e)
         {
-            await SendMessageAsync(textBoxChat.Text);
+            try
+            {
+                await SendMessageAsync(textBoxChat.Text);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
         }
 
         internal async Task<bool> SummarizeNotesAsync()
@@ -273,47 +287,61 @@ namespace kako
 
         private void SaveAISettings()
         {
-            var settings = new AISettings
+            try
             {
-                NumberOfPosts = (int)numericUpDownNumberOfPosts.Value,
-                Turns = (int)numericUpDownTurns.Value,
-                Model = textBoxModel.Text,
-                Prompt = textBoxPrompt.Text,
-                PromptForEveryMessage = textBoxPromptForEveryMessage.Text,
-                PromptForReply = textBoxPromptForReply.Text
-            };
-            Tools.SaveAISettings(settings);
+                var settings = new AISettings
+                {
+                    NumberOfPosts = (int)numericUpDownNumberOfPosts.Value,
+                    Turns = (int)numericUpDownTurns.Value,
+                    Model = textBoxModel.Text,
+                    Prompt = textBoxPrompt.Text,
+                    PromptForEveryMessage = textBoxPromptForEveryMessage.Text,
+                    PromptForReply = textBoxPromptForReply.Text
+                };
+                Tools.SaveAISettings(settings);
 
-            // チャットセッションのバックアップデータがある場合は保存
-            if (_chat != null)
+                // チャットセッションのバックアップデータがある場合は保存
+                if (_chat != null)
+                {
+                    _chatSessionBackUpData = _chat.CreateChatSessionBackUpData();
+
+                    // csをJSON形式で保存
+                    Tools.SaveChatSession(_chatSessionBackUpData);
+                }
+            }
+            catch (Exception ex)
             {
-                _chatSessionBackUpData = _chat.CreateChatSessionBackUpData();
-
-                // csをJSON形式で保存
-                Tools.SaveChatSession(_chatSessionBackUpData);
+                Debug.WriteLine(ex.Message);
             }
         }
 
         private void LoadAISettings()
         {
-            var settings = Tools.LoadAISettings();
-            if (settings.NumberOfPosts < 1)
+            try
             {
-                settings.NumberOfPosts = 1000;
-            }
-            if (settings.Turns < 1)
-            {
-                settings.Turns = 50;
-            }
-            numericUpDownNumberOfPosts.Value = settings.NumberOfPosts;
-            numericUpDownTurns.Value = settings.Turns;
-            textBoxModel.Text = settings.Model;
-            textBoxPrompt.Text = settings.Prompt;
-            textBoxPromptForEveryMessage.Text = settings.PromptForEveryMessage;
-            textBoxPromptForReply.Text = settings.PromptForReply;
+                var settings = Tools.LoadAISettings();
+                if (settings.NumberOfPosts < 1)
+                {
+                    settings.NumberOfPosts = 1000;
+                }
+                if (settings.Turns < 1)
+                {
+                    settings.Turns = 50;
+                }
+                numericUpDownNumberOfPosts.Value = settings.NumberOfPosts;
+                numericUpDownTurns.Value = settings.Turns;
+                textBoxModel.Text = settings.Model;
+                textBoxPrompt.Text = settings.Prompt;
+                textBoxPromptForEveryMessage.Text = settings.PromptForEveryMessage;
+                textBoxPromptForReply.Text = settings.PromptForReply;
 
-            // チャットセッションの復元
-            _chatSessionBackUpData = Tools.LoadChatSession();
+                // チャットセッションの復元
+                _chatSessionBackUpData = Tools.LoadChatSession();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
         }
 
         private void CheckBoxInitialized_CheckedChanged(object sender, EventArgs e)
