@@ -27,9 +27,11 @@ namespace kako
             public string Director { get; set; } = string.Empty;
             public bool ShowOnlyFollowees { get; set; } = true;
             public bool UsePetname { get; set; } = true;
-            public bool MentionEveryHour { get; set; } = false;
-            public int MentionMinutes { get; set; } = 0;
+            public bool SummarizeEveryHour { get; set; } = false;
+            public int SummarizeMinutes { get; set; } = 0;
             public bool MentionMode { get; set; } = true;
+            public bool SummarizeByEventCount { get; set; } = false;
+            public int EventThreshold { get; set; } = 100;
             public List<string> ForceCommands { get; set; } = [];
             public List<string> CallCommands { get; set; } = [];
             public bool OpenMode { get; set; } = false;
@@ -95,20 +97,30 @@ namespace kako
             get => _data.UsePetname;
             set => _data.UsePetname = value;
         }
-        public static bool MentionEveryHour
+        public static bool SummarizeEveryHour
         {
-            get => _data.MentionEveryHour;
-            set => _data.MentionEveryHour = value;
+            get => _data.SummarizeEveryHour;
+            set => _data.SummarizeEveryHour = value;
         }
-        public static int MentionMinutes
+        public static int SummarizeMinutes
         {
-            get => _data.MentionMinutes;
-            set => _data.MentionMinutes = value;
+            get => _data.SummarizeMinutes;
+            set => _data.SummarizeMinutes = value;
         }
         public static bool MentionMode
         {
             get => _data.MentionMode;
             set => _data.MentionMode = value;
+        }
+        public static bool SummarizeByEventCount
+        {
+            get => _data.SummarizeByEventCount;
+            set => _data.SummarizeByEventCount = value;
+        }
+        public static int EventThreshold
+        {
+            get => _data.EventThreshold;
+            set => _data.EventThreshold = value;
         }
         public static List<string> ForceCommands
         {

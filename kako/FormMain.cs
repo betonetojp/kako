@@ -52,9 +52,11 @@ namespace kako
         private string _director = string.Empty;
         private bool _showOnlyFollowees;
         private bool _usePetname;
-        private bool _mentionEveryHour;
-        private int _mentionMinutes;
+        private bool _summarizeEveryHour;
+        private int _summarizeMinutes;
         private bool _mentionMode;
+        private bool _summarizeByEventCount;
+        private int _eventThreshold;
         private List<string> _forceCommands = [];
         private List<string> _callCommands = [];
         private bool _openMode;
@@ -145,9 +147,11 @@ namespace kako
             _director = Setting.Director;
             _showOnlyFollowees = Setting.ShowOnlyFollowees;
             _usePetname = Setting.UsePetname;
-            _mentionEveryHour = Setting.MentionEveryHour;
-            _mentionMinutes = Setting.MentionMinutes;
+            _summarizeEveryHour = Setting.SummarizeEveryHour;
+            _summarizeMinutes = Setting.SummarizeMinutes;
             _mentionMode = Setting.MentionMode;
+            _summarizeByEventCount = Setting.SummarizeByEventCount;
+            _eventThreshold = Setting.EventThreshold;
             _forceCommands = Setting.ForceCommands;
             _callCommands = Setting.CallCommands;
             _openMode = Setting.OpenMode;
@@ -440,14 +444,14 @@ namespace kako
                                             if (content == "start")
                                             {
                                                 await PostAsync("＊ 定期投稿を有効にしました ＊", nostrEvent);
-                                                _mentionEveryHour = true;
+                                                _summarizeEveryHour = true;
                                                 continue;
                                             }
                                             // ストップコマンド
                                             if (content == "stop")
                                             {
                                                 await PostAsync("＊ 定期投稿を無効にしました ＊", nostrEvent);
-                                                _mentionEveryHour = false;
+                                                _summarizeEveryHour = false;
                                                 continue;
                                             }
 
@@ -643,6 +647,12 @@ namespace kako
 
                             // 改行をスペースに置き換えてログ表示
                             Debug.WriteLine($"{userName}: {content.Replace('\n', ' ')}");
+
+                            // 受信投稿数によるまとめ投稿
+                            if (_summarizeByEventCount && dataGridViewNotes.Rows.Count >= _eventThreshold)
+                            {
+                                await SummarizeAndPostAsync();
+                            }
                         }
                         #endregion
                     }
@@ -966,9 +976,10 @@ namespace kako
             _formSetting.textBoxDirector.Text = _director;
             _formSetting.checkBoxShowOnlyFollowees.Checked = _showOnlyFollowees;
             _formSetting.checkBoxUsePetname.Checked = _usePetname;
-            _formSetting.checkBoxMentionEveryHour.Checked = _mentionEveryHour;
-            _formSetting.numericUpDownMentionMinutes.Value = _mentionMinutes;
+            _formSetting.checkBoxSummarizeEveryHour.Checked = _summarizeEveryHour;
+            _formSetting.numericUpDownSummarizeMinutes.Value = _summarizeMinutes;
             _formSetting.checkBoxMentionMode.Checked = _mentionMode;
+            _formSetting.numericUpDownEventThreshold.Value = _eventThreshold;
             _formSetting.textBoxForceCommands.Text = string.Join("\r\n", _forceCommands);
             _formSetting.textBoxCallCommands.Text = string.Join("\r\n", _callCommands);
             _formSetting.checkBoxOpenMode.Checked = _openMode;
@@ -991,9 +1002,11 @@ namespace kako
             _director = _formSetting.textBoxDirector.Text;
             _showOnlyFollowees = _formSetting.checkBoxShowOnlyFollowees.Checked;
             _usePetname = _formSetting.checkBoxUsePetname.Checked;
-            _mentionEveryHour = _formSetting.checkBoxMentionEveryHour.Checked;
-            _mentionMinutes = (int)_formSetting.numericUpDownMentionMinutes.Value;
+            _summarizeEveryHour = _formSetting.checkBoxSummarizeEveryHour.Checked;
+            _summarizeMinutes = (int)_formSetting.numericUpDownSummarizeMinutes.Value;
             _mentionMode = _formSetting.checkBoxMentionMode.Checked;
+            _summarizeByEventCount = _formSetting.checkBoxSummarizeByEventCount.Checked;
+            _eventThreshold = (int)_formSetting.numericUpDownEventThreshold.Value;
             _forceCommands = [.. _formSetting.textBoxForceCommands.Text.Split(["\r\n"], StringSplitOptions.RemoveEmptyEntries)];
             _callCommands = [.. _formSetting.textBoxCallCommands.Text.Split(["\r\n"], StringSplitOptions.RemoveEmptyEntries)];
             _openMode = _formSetting.checkBoxOpenMode.Checked;
@@ -1068,9 +1081,11 @@ namespace kako
             Setting.Director = _director;
             Setting.ShowOnlyFollowees = _showOnlyFollowees;
             Setting.UsePetname = _usePetname;
-            Setting.MentionEveryHour = _mentionEveryHour;
-            Setting.MentionMinutes = _mentionMinutes;
+            Setting.SummarizeEveryHour = _summarizeEveryHour;
+            Setting.SummarizeMinutes = _summarizeMinutes;
             Setting.MentionMode = _mentionMode;
+            Setting.SummarizeByEventCount = _summarizeByEventCount;
+            Setting.EventThreshold = _eventThreshold;
             Setting.ForceCommands = _forceCommands;
             Setting.CallCommands = _callCommands;
             Setting.OpenMode = _openMode;
@@ -1591,8 +1606,8 @@ namespace kako
         private void SetDailyTimer()
         {
             var now = DateTime.Now;
-            var nextTrigger = new DateTime(now.Year, now.Month, now.Day, now.Hour, _mentionMinutes, 0);
-            if (now.Minute >= _mentionMinutes)
+            var nextTrigger = new DateTime(now.Year, now.Month, now.Day, now.Hour, _summarizeMinutes, 0);
+            if (now.Minute >= _summarizeMinutes)
             {
                 nextTrigger = nextTrigger.AddHours(1);
             }
@@ -1627,7 +1642,7 @@ namespace kako
                 labelRelays.Invoke((MethodInvoker)(() => labelRelays.Text = "Reconnected successfully."));
 
                 // 定時まとめメンション
-                if (_mentionEveryHour)
+                if (_summarizeEveryHour)
                 {
                     await SummarizeAndPostAsync();
                 }

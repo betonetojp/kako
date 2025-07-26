@@ -51,8 +51,8 @@
             label6 = new Label();
             textBoxForceCommands = new TextBox();
             label7 = new Label();
-            checkBoxMentionEveryHour = new CheckBox();
-            numericUpDownMentionMinutes = new NumericUpDown();
+            checkBoxSummarizeEveryHour = new CheckBox();
+            numericUpDownSummarizeMinutes = new NumericUpDown();
             label8 = new Label();
             textBoxCallCommands = new TextBox();
             checkBoxOpenMode = new CheckBox();
@@ -60,9 +60,13 @@
             label9 = new Label();
             checkBoxMentionMode = new CheckBox();
             checkBoxUsePetname = new CheckBox();
+            label10 = new Label();
+            checkBoxSummarizeByEventCount = new CheckBox();
+            numericUpDownEventThreshold = new NumericUpDown();
             ((System.ComponentModel.ISupportInitialize)trackBarOpacity).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)numericUpDownMentionMinutes).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)numericUpDownSummarizeMinutes).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numericUpDownCallReplyLimit).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)numericUpDownEventThreshold).BeginInit();
             SuspendLayout();
             // 
             // textBoxNsec
@@ -70,18 +74,18 @@
             textBoxNsec.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             textBoxNsec.BorderStyle = BorderStyle.FixedSingle;
             textBoxNsec.ImeMode = ImeMode.Disable;
-            textBoxNsec.Location = new Point(115, 279);
+            textBoxNsec.Location = new Point(115, 308);
             textBoxNsec.MaxLength = 256;
             textBoxNsec.Name = "textBoxNsec";
             textBoxNsec.PasswordChar = '*';
             textBoxNsec.PlaceholderText = "nsec1...";
-            textBoxNsec.Size = new Size(228, 23);
-            textBoxNsec.TabIndex = 15;
+            textBoxNsec.Size = new Size(268, 23);
+            textBoxNsec.TabIndex = 17;
             textBoxNsec.Leave += TextBoxNsec_Leave;
             // 
             // trackBarOpacity
             // 
-            trackBarOpacity.Location = new Point(252, 31);
+            trackBarOpacity.Location = new Point(292, 36);
             trackBarOpacity.Maximum = 100;
             trackBarOpacity.Minimum = 20;
             trackBarOpacity.Name = "trackBarOpacity";
@@ -104,7 +108,7 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(252, 13);
+            label1.Location = new Point(292, 13);
             label1.Name = "label1";
             label1.Size = new Size(48, 15);
             label1.TabIndex = 0;
@@ -128,7 +132,7 @@
             label4.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             label4.AutoSize = true;
             label4.ForeColor = SystemColors.GrayText;
-            label4.Location = new Point(199, 337);
+            label4.Location = new Point(199, 377);
             label4.Name = "label4";
             label4.Size = new Size(126, 15);
             label4.TabIndex = 0;
@@ -138,17 +142,17 @@
             // 
             linkLabelIcons8.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             linkLabelIcons8.AutoSize = true;
-            linkLabelIcons8.Location = new Point(331, 337);
+            linkLabelIcons8.Location = new Point(331, 377);
             linkLabelIcons8.Name = "linkLabelIcons8";
             linkLabelIcons8.Size = new Size(41, 15);
-            linkLabelIcons8.TabIndex = 19;
+            linkLabelIcons8.TabIndex = 21;
             linkLabelIcons8.TabStop = true;
             linkLabelIcons8.Text = "Icons8";
             linkLabelIcons8.LinkClicked += LinkLabelIcons8_LinkClicked;
             // 
             // labelOpacity
             // 
-            labelOpacity.Location = new Point(331, 13);
+            labelOpacity.Location = new Point(371, 13);
             labelOpacity.Name = "labelOpacity";
             labelOpacity.Size = new Size(41, 15);
             labelOpacity.TabIndex = 0;
@@ -168,7 +172,7 @@
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(45, 281);
+            label3.Location = new Point(45, 310);
             label3.Name = "label3";
             label3.Size = new Size(64, 15);
             label3.TabIndex = 0;
@@ -178,12 +182,12 @@
             // 
             linkLabelVersion.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             linkLabelVersion.AutoSize = true;
-            linkLabelVersion.Location = new Point(12, 337);
+            linkLabelVersion.Location = new Point(12, 377);
             linkLabelVersion.Name = "linkLabelVersion";
             linkLabelVersion.Size = new Size(37, 15);
-            linkLabelVersion.TabIndex = 18;
+            linkLabelVersion.TabIndex = 20;
             linkLabelVersion.TabStop = true;
-            linkLabelVersion.Text = "v0.3.6";
+            linkLabelVersion.Text = "v0.3.7";
             linkLabelVersion.LinkClicked += LinkLabelVersion_LinkClicked;
             // 
             // checkBoxMinimizeToTray
@@ -199,7 +203,7 @@
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(48, 310);
+            label2.Location = new Point(48, 339);
             label2.Name = "label2";
             label2.Size = new Size(61, 15);
             label2.TabIndex = 15;
@@ -209,21 +213,21 @@
             // 
             textBoxNpub.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             textBoxNpub.BorderStyle = BorderStyle.FixedSingle;
-            textBoxNpub.Location = new Point(115, 308);
+            textBoxNpub.Location = new Point(115, 337);
             textBoxNpub.Name = "textBoxNpub";
             textBoxNpub.PlaceholderText = "npub1...";
             textBoxNpub.ReadOnly = true;
-            textBoxNpub.Size = new Size(257, 23);
-            textBoxNpub.TabIndex = 17;
+            textBoxNpub.Size = new Size(297, 23);
+            textBoxNpub.TabIndex = 19;
             // 
             // buttonLogOut
             // 
             buttonLogOut.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             buttonLogOut.Image = Properties.Resources.icons8_log_out_16;
-            buttonLogOut.Location = new Point(349, 279);
+            buttonLogOut.Location = new Point(389, 308);
             buttonLogOut.Name = "buttonLogOut";
             buttonLogOut.Size = new Size(23, 23);
-            buttonLogOut.TabIndex = 16;
+            buttonLogOut.TabIndex = 18;
             toolTipLogOut.SetToolTip(buttonLogOut, "Log out");
             buttonLogOut.UseVisualStyleBackColor = true;
             buttonLogOut.Click += ButtonLogOut_Click;
@@ -235,7 +239,7 @@
             textBoxDirector.Location = new Point(115, 87);
             textBoxDirector.Name = "textBoxDirector";
             textBoxDirector.PlaceholderText = "npub1...";
-            textBoxDirector.Size = new Size(257, 23);
+            textBoxDirector.Size = new Size(297, 23);
             textBoxDirector.TabIndex = 5;
             // 
             // label5
@@ -250,7 +254,7 @@
             // label6
             // 
             label6.AutoSize = true;
-            label6.Location = new Point(12, 171);
+            label6.Location = new Point(12, 200);
             label6.Name = "label6";
             label6.Size = new Size(97, 15);
             label6.TabIndex = 0;
@@ -259,45 +263,45 @@
             // textBoxForceCommands
             // 
             textBoxForceCommands.BorderStyle = BorderStyle.FixedSingle;
-            textBoxForceCommands.Location = new Point(115, 169);
+            textBoxForceCommands.Location = new Point(115, 198);
             textBoxForceCommands.Multiline = true;
             textBoxForceCommands.Name = "textBoxForceCommands";
             textBoxForceCommands.ScrollBars = ScrollBars.Vertical;
             textBoxForceCommands.Size = new Size(149, 49);
-            textBoxForceCommands.TabIndex = 11;
+            textBoxForceCommands.TabIndex = 13;
             // 
             // label7
             // 
             label7.AutoSize = true;
-            label7.Location = new Point(223, 142);
+            label7.Location = new Point(224, 143);
             label7.Name = "label7";
             label7.Size = new Size(49, 15);
             label7.TabIndex = 0;
             label7.Text = "minutes";
             // 
-            // checkBoxMentionEveryHour
+            // checkBoxSummarizeEveryHour
             // 
-            checkBoxMentionEveryHour.AutoSize = true;
-            checkBoxMentionEveryHour.Location = new Point(11, 141);
-            checkBoxMentionEveryHour.Name = "checkBoxMentionEveryHour";
-            checkBoxMentionEveryHour.Size = new Size(155, 19);
-            checkBoxMentionEveryHour.TabIndex = 8;
-            checkBoxMentionEveryHour.Text = "Summarize every hour at";
-            checkBoxMentionEveryHour.UseVisualStyleBackColor = true;
+            checkBoxSummarizeEveryHour.AutoSize = true;
+            checkBoxSummarizeEveryHour.Location = new Point(12, 142);
+            checkBoxSummarizeEveryHour.Name = "checkBoxSummarizeEveryHour";
+            checkBoxSummarizeEveryHour.Size = new Size(155, 19);
+            checkBoxSummarizeEveryHour.TabIndex = 8;
+            checkBoxSummarizeEveryHour.Text = "Summarize every hour at";
+            checkBoxSummarizeEveryHour.UseVisualStyleBackColor = true;
             // 
-            // numericUpDownMentionMinutes
+            // numericUpDownSummarizeMinutes
             // 
-            numericUpDownMentionMinutes.Location = new Point(172, 140);
-            numericUpDownMentionMinutes.Maximum = new decimal(new int[] { 59, 0, 0, 0 });
-            numericUpDownMentionMinutes.Name = "numericUpDownMentionMinutes";
-            numericUpDownMentionMinutes.Size = new Size(45, 23);
-            numericUpDownMentionMinutes.TabIndex = 9;
-            numericUpDownMentionMinutes.TextAlign = HorizontalAlignment.Center;
+            numericUpDownSummarizeMinutes.Location = new Point(173, 141);
+            numericUpDownSummarizeMinutes.Maximum = new decimal(new int[] { 59, 0, 0, 0 });
+            numericUpDownSummarizeMinutes.Name = "numericUpDownSummarizeMinutes";
+            numericUpDownSummarizeMinutes.Size = new Size(45, 23);
+            numericUpDownSummarizeMinutes.TabIndex = 9;
+            numericUpDownSummarizeMinutes.TextAlign = HorizontalAlignment.Center;
             // 
             // label8
             // 
             label8.AutoSize = true;
-            label8.Location = new Point(22, 226);
+            label8.Location = new Point(22, 255);
             label8.Name = "label8";
             label8.Size = new Size(87, 15);
             label8.TabIndex = 0;
@@ -306,37 +310,37 @@
             // textBoxCallCommands
             // 
             textBoxCallCommands.BorderStyle = BorderStyle.FixedSingle;
-            textBoxCallCommands.Location = new Point(115, 224);
+            textBoxCallCommands.Location = new Point(115, 253);
             textBoxCallCommands.Multiline = true;
             textBoxCallCommands.Name = "textBoxCallCommands";
             textBoxCallCommands.ScrollBars = ScrollBars.Vertical;
             textBoxCallCommands.Size = new Size(149, 49);
-            textBoxCallCommands.TabIndex = 12;
+            textBoxCallCommands.TabIndex = 14;
             // 
             // checkBoxOpenMode
             // 
             checkBoxOpenMode.AutoSize = true;
-            checkBoxOpenMode.Location = new Point(270, 225);
+            checkBoxOpenMode.Location = new Point(270, 254);
             checkBoxOpenMode.Name = "checkBoxOpenMode";
             checkBoxOpenMode.Size = new Size(88, 19);
-            checkBoxOpenMode.TabIndex = 13;
+            checkBoxOpenMode.TabIndex = 15;
             checkBoxOpenMode.Text = "Open mode";
             checkBoxOpenMode.UseVisualStyleBackColor = true;
             // 
             // numericUpDownCallReplyLimit
             // 
-            numericUpDownCallReplyLimit.Location = new Point(325, 250);
+            numericUpDownCallReplyLimit.Location = new Point(325, 279);
             numericUpDownCallReplyLimit.Maximum = new decimal(new int[] { 99, 0, 0, 0 });
             numericUpDownCallReplyLimit.Name = "numericUpDownCallReplyLimit";
             numericUpDownCallReplyLimit.Size = new Size(47, 23);
-            numericUpDownCallReplyLimit.TabIndex = 14;
+            numericUpDownCallReplyLimit.TabIndex = 16;
             numericUpDownCallReplyLimit.TextAlign = HorizontalAlignment.Center;
             numericUpDownCallReplyLimit.Value = new decimal(new int[] { 10, 0, 0, 0 });
             // 
             // label9
             // 
             label9.AutoSize = true;
-            label9.Location = new Point(270, 252);
+            label9.Location = new Point(270, 281);
             label9.Name = "label9";
             label9.Size = new Size(49, 15);
             label9.TabIndex = 0;
@@ -347,7 +351,7 @@
             checkBoxMentionMode.AutoSize = true;
             checkBoxMentionMode.Checked = true;
             checkBoxMentionMode.CheckState = CheckState.Checked;
-            checkBoxMentionMode.Location = new Point(278, 141);
+            checkBoxMentionMode.Location = new Point(279, 142);
             checkBoxMentionMode.Name = "checkBoxMentionMode";
             checkBoxMentionMode.Size = new Size(71, 19);
             checkBoxMentionMode.TabIndex = 10;
@@ -366,11 +370,41 @@
             checkBoxUsePetname.Text = "Use petname";
             checkBoxUsePetname.UseVisualStyleBackColor = true;
             // 
+            // label10
+            // 
+            label10.AutoSize = true;
+            label10.Location = new Point(224, 172);
+            label10.Name = "label10";
+            label10.Size = new Size(41, 15);
+            label10.TabIndex = 0;
+            label10.Text = "events";
+            // 
+            // checkBoxSummarizeByEventCount
+            // 
+            checkBoxSummarizeByEventCount.AutoSize = true;
+            checkBoxSummarizeByEventCount.Location = new Point(12, 171);
+            checkBoxSummarizeByEventCount.Name = "checkBoxSummarizeByEventCount";
+            checkBoxSummarizeByEventCount.Size = new Size(114, 19);
+            checkBoxSummarizeByEventCount.TabIndex = 11;
+            checkBoxSummarizeByEventCount.Text = "Summarize every";
+            checkBoxSummarizeByEventCount.UseVisualStyleBackColor = true;
+            // 
+            // numericUpDownEventThreshold
+            // 
+            numericUpDownEventThreshold.Location = new Point(132, 170);
+            numericUpDownEventThreshold.Maximum = new decimal(new int[] { 9999, 0, 0, 0 });
+            numericUpDownEventThreshold.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            numericUpDownEventThreshold.Name = "numericUpDownEventThreshold";
+            numericUpDownEventThreshold.Size = new Size(86, 23);
+            numericUpDownEventThreshold.TabIndex = 12;
+            numericUpDownEventThreshold.TextAlign = HorizontalAlignment.Center;
+            numericUpDownEventThreshold.Value = new decimal(new int[] { 9999, 0, 0, 0 });
+            // 
             // FormSetting
             // 
             AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
-            ClientSize = new Size(384, 361);
+            ClientSize = new Size(424, 401);
             Controls.Add(checkBoxUsePetname);
             Controls.Add(checkBoxMentionMode);
             Controls.Add(label9);
@@ -378,8 +412,11 @@
             Controls.Add(textBoxCallCommands);
             Controls.Add(label8);
             Controls.Add(numericUpDownCallReplyLimit);
-            Controls.Add(numericUpDownMentionMinutes);
-            Controls.Add(checkBoxMentionEveryHour);
+            Controls.Add(numericUpDownEventThreshold);
+            Controls.Add(numericUpDownSummarizeMinutes);
+            Controls.Add(checkBoxSummarizeByEventCount);
+            Controls.Add(label10);
+            Controls.Add(checkBoxSummarizeEveryHour);
             Controls.Add(label7);
             Controls.Add(textBoxForceCommands);
             Controls.Add(label6);
@@ -404,7 +441,7 @@
             KeyPreview = true;
             MaximizeBox = false;
             MinimizeBox = false;
-            MinimumSize = new Size(400, 400);
+            MinimumSize = new Size(440, 440);
             Name = "FormSetting";
             ShowInTaskbar = false;
             SizeGripStyle = SizeGripStyle.Show;
@@ -415,8 +452,9 @@
             Shown += FormSetting_Shown;
             KeyDown += FormSetting_KeyDown;
             ((System.ComponentModel.ISupportInitialize)trackBarOpacity).EndInit();
-            ((System.ComponentModel.ISupportInitialize)numericUpDownMentionMinutes).EndInit();
+            ((System.ComponentModel.ISupportInitialize)numericUpDownSummarizeMinutes).EndInit();
             ((System.ComponentModel.ISupportInitialize)numericUpDownCallReplyLimit).EndInit();
+            ((System.ComponentModel.ISupportInitialize)numericUpDownEventThreshold).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -443,8 +481,8 @@
         private Label label6;
         internal TextBox textBoxForceCommands;
         private Label label7;
-        internal CheckBox checkBoxMentionEveryHour;
-        internal NumericUpDown numericUpDownMentionMinutes;
+        internal CheckBox checkBoxSummarizeEveryHour;
+        internal NumericUpDown numericUpDownSummarizeMinutes;
         private NumericUpDown numericUpDown1;
         private Label label8;
         internal TextBox textBoxCallCommands;
@@ -453,5 +491,8 @@
         private Label label9;
         internal CheckBox checkBoxMentionMode;
         internal CheckBox checkBoxUsePetname;
+        private Label label10;
+        internal CheckBox checkBoxSummarizeByEventCount;
+        internal NumericUpDown numericUpDownEventThreshold;
     }
 }
