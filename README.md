@@ -9,7 +9,9 @@ Tiny nostr summary bot client for windows.
 - 「Show only followees」を有効にすると、返信先（あなた）がフォローしているユーザーのみのタイムラインを取得します。
 - 「Use petname」を有効にすると、返信先（あなた）が設定しているpetnameを使用します。
 - 「Summarize every hour at xx minutes」を有効にすると、毎時xx分にbotが前回実施以降のタイムラインのまとめを投稿します。
+- 「Summarize every xxx events」を有効にすると、イベントをxxx行読み込むごとにbotが前回実施以降のタイムラインのまとめを投稿します。
 - 「Mention」を有効にすると、まとめの投稿がメンションになります。
+- 「Add nostr:npub1...」を有効にすると、まとめ投稿の先頭に「nostr:<Director's npub>」を追加します。
 - 「Force commands」にbotが反応するコマンドを入力してください。
 - 「Force commands」に設定したコマンドを投稿すると、botが前回実施以降のタイムラインのまとめを投稿します。(Director専用)
 - 「Call commands」にbotを呼び出すコマンドを入力してください。
