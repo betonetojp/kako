@@ -55,6 +55,7 @@ namespace kako
         private bool _summarizeEveryHour;
         private int _summarizeMinutes;
         private bool _mentionMode;
+        private bool _addNostrNpub1;
         private bool _summarizeByEventCount;
         private int _eventThreshold;
         private List<string> _forceCommands = [];
@@ -83,6 +84,9 @@ namespace kako
         // スタミナ管理
         private int _callReplyCount = 0;
         private bool _alreadyPostedBreakMessage = false;
+
+        // まとめ中
+        private bool _isSummarizing = false;
         #endregion
 
         #region コンストラクタ
@@ -150,6 +154,7 @@ namespace kako
             _summarizeEveryHour = Setting.SummarizeEveryHour;
             _summarizeMinutes = Setting.SummarizeMinutes;
             _mentionMode = Setting.MentionMode;
+            _addNostrNpub1 = Setting.AddNostrNpub1;
             _summarizeByEventCount = Setting.SummarizeByEventCount;
             _eventThreshold = Setting.EventThreshold;
             _forceCommands = Setting.ForceCommands;
@@ -843,7 +848,7 @@ namespace kako
             var newEvent = new NostrEvent()
             {
                 Kind = 1,
-                Content = "nostr:" + _director + " " + content.Replace("\r\n", "\n"),
+                Content = (_addNostrNpub1 ? "nostr:" + _director + " " : "") + content.Replace("\r\n", "\n"),
                 Tags = tags
             };
 
@@ -979,6 +984,8 @@ namespace kako
             _formSetting.checkBoxSummarizeEveryHour.Checked = _summarizeEveryHour;
             _formSetting.numericUpDownSummarizeMinutes.Value = _summarizeMinutes;
             _formSetting.checkBoxMentionMode.Checked = _mentionMode;
+            _formSetting.checkBoxAddNostrNpub1.Checked = _addNostrNpub1;
+            _formSetting.checkBoxSummarizeByEventCount .Checked = _summarizeByEventCount;
             _formSetting.numericUpDownEventThreshold.Value = _eventThreshold;
             _formSetting.textBoxForceCommands.Text = string.Join("\r\n", _forceCommands);
             _formSetting.textBoxCallCommands.Text = string.Join("\r\n", _callCommands);
@@ -1005,6 +1012,7 @@ namespace kako
             _summarizeEveryHour = _formSetting.checkBoxSummarizeEveryHour.Checked;
             _summarizeMinutes = (int)_formSetting.numericUpDownSummarizeMinutes.Value;
             _mentionMode = _formSetting.checkBoxMentionMode.Checked;
+            _addNostrNpub1 = _formSetting.checkBoxAddNostrNpub1.Checked;
             _summarizeByEventCount = _formSetting.checkBoxSummarizeByEventCount.Checked;
             _eventThreshold = (int)_formSetting.numericUpDownEventThreshold.Value;
             _forceCommands = [.. _formSetting.textBoxForceCommands.Text.Split(["\r\n"], StringSplitOptions.RemoveEmptyEntries)];
@@ -1084,6 +1092,7 @@ namespace kako
             Setting.SummarizeEveryHour = _summarizeEveryHour;
             Setting.SummarizeMinutes = _summarizeMinutes;
             Setting.MentionMode = _mentionMode;
+            Setting.AddNostrNpub1 = _addNostrNpub1;
             Setting.SummarizeByEventCount = _summarizeByEventCount;
             Setting.EventThreshold = _eventThreshold;
             Setting.ForceCommands = _forceCommands;
@@ -1686,29 +1695,46 @@ namespace kako
         // まとめ投稿
         private async Task SummarizeAndPostAsync()
         {
-            if (!_formAI.IsInitialized)
+            if (_isSummarizing)
             {
-                LastCreatedAt = DateTimeOffset.MinValue;
-                LatestCreatedAt = DateTimeOffset.MinValue;
+                return;
             }
-            bool success = await _formAI.SummarizeNotesAsync();
-            // 1秒待つ
-            await Task.Delay(1000);
-            string answerText = string.Empty;
-            Invoke((MethodInvoker)(() => answerText = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n')));
-            if (string.IsNullOrEmpty(_director) || !_mentionMode)
+            _isSummarizing = true;
+
+            try
             {
-                await PostAsync(answerText);
+                if (!_formAI.IsInitialized)
+                {
+                    LastCreatedAt = DateTimeOffset.MinValue;
+                    LatestCreatedAt = DateTimeOffset.MinValue;
+                }
+                bool success = await _formAI.SummarizeNotesAsync();
+                // 1秒待つ
+                await Task.Delay(1000);
+                string answerText = string.Empty;
+                Invoke((MethodInvoker)(() => answerText = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n')));
+                if (string.IsNullOrEmpty(_director) || !_mentionMode)
+                {
+                    await PostAsync(answerText);
+                }
+                else
+                {
+                    await MentionAsync(answerText);
+                }
+                if (success)
+                {
+                    dataGridViewNotes.Invoke((MethodInvoker)(() => dataGridViewNotes.Rows.Clear()));
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                }
             }
-            else
+            catch (Exception ex)
             {
-                await MentionAsync(answerText);
+                Debug.WriteLine($"定時投稿エラー: {ex.Message}");
             }
-            if (success)
+            finally
             {
-                dataGridViewNotes.Invoke((MethodInvoker)(() => dataGridViewNotes.Rows.Clear()));
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
+                _isSummarizing = false;
             }
         }
         #endregion

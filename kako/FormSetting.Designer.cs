@@ -63,6 +63,7 @@
             label10 = new Label();
             checkBoxSummarizeByEventCount = new CheckBox();
             numericUpDownEventThreshold = new NumericUpDown();
+            checkBoxAddNostrNpub1 = new CheckBox();
             ((System.ComponentModel.ISupportInitialize)trackBarOpacity).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numericUpDownSummarizeMinutes).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numericUpDownCallReplyLimit).BeginInit();
@@ -80,7 +81,7 @@
             textBoxNsec.PasswordChar = '*';
             textBoxNsec.PlaceholderText = "nsec1...";
             textBoxNsec.Size = new Size(268, 23);
-            textBoxNsec.TabIndex = 17;
+            textBoxNsec.TabIndex = 18;
             textBoxNsec.Leave += TextBoxNsec_Leave;
             // 
             // trackBarOpacity
@@ -145,7 +146,7 @@
             linkLabelIcons8.Location = new Point(331, 377);
             linkLabelIcons8.Name = "linkLabelIcons8";
             linkLabelIcons8.Size = new Size(41, 15);
-            linkLabelIcons8.TabIndex = 21;
+            linkLabelIcons8.TabIndex = 22;
             linkLabelIcons8.TabStop = true;
             linkLabelIcons8.Text = "Icons8";
             linkLabelIcons8.LinkClicked += LinkLabelIcons8_LinkClicked;
@@ -185,7 +186,7 @@
             linkLabelVersion.Location = new Point(12, 377);
             linkLabelVersion.Name = "linkLabelVersion";
             linkLabelVersion.Size = new Size(37, 15);
-            linkLabelVersion.TabIndex = 20;
+            linkLabelVersion.TabIndex = 21;
             linkLabelVersion.TabStop = true;
             linkLabelVersion.Text = "v0.3.7";
             linkLabelVersion.LinkClicked += LinkLabelVersion_LinkClicked;
@@ -218,7 +219,7 @@
             textBoxNpub.PlaceholderText = "npub1...";
             textBoxNpub.ReadOnly = true;
             textBoxNpub.Size = new Size(297, 23);
-            textBoxNpub.TabIndex = 19;
+            textBoxNpub.TabIndex = 20;
             // 
             // buttonLogOut
             // 
@@ -227,7 +228,7 @@
             buttonLogOut.Location = new Point(389, 308);
             buttonLogOut.Name = "buttonLogOut";
             buttonLogOut.Size = new Size(23, 23);
-            buttonLogOut.TabIndex = 18;
+            buttonLogOut.TabIndex = 19;
             toolTipLogOut.SetToolTip(buttonLogOut, "Log out");
             buttonLogOut.UseVisualStyleBackColor = true;
             buttonLogOut.Click += ButtonLogOut_Click;
@@ -268,7 +269,7 @@
             textBoxForceCommands.Name = "textBoxForceCommands";
             textBoxForceCommands.ScrollBars = ScrollBars.Vertical;
             textBoxForceCommands.Size = new Size(149, 49);
-            textBoxForceCommands.TabIndex = 13;
+            textBoxForceCommands.TabIndex = 14;
             // 
             // label7
             // 
@@ -315,7 +316,7 @@
             textBoxCallCommands.Name = "textBoxCallCommands";
             textBoxCallCommands.ScrollBars = ScrollBars.Vertical;
             textBoxCallCommands.Size = new Size(149, 49);
-            textBoxCallCommands.TabIndex = 14;
+            textBoxCallCommands.TabIndex = 15;
             // 
             // checkBoxOpenMode
             // 
@@ -323,7 +324,7 @@
             checkBoxOpenMode.Location = new Point(270, 254);
             checkBoxOpenMode.Name = "checkBoxOpenMode";
             checkBoxOpenMode.Size = new Size(88, 19);
-            checkBoxOpenMode.TabIndex = 15;
+            checkBoxOpenMode.TabIndex = 16;
             checkBoxOpenMode.Text = "Open mode";
             checkBoxOpenMode.UseVisualStyleBackColor = true;
             // 
@@ -333,7 +334,7 @@
             numericUpDownCallReplyLimit.Maximum = new decimal(new int[] { 99, 0, 0, 0 });
             numericUpDownCallReplyLimit.Name = "numericUpDownCallReplyLimit";
             numericUpDownCallReplyLimit.Size = new Size(47, 23);
-            numericUpDownCallReplyLimit.TabIndex = 16;
+            numericUpDownCallReplyLimit.TabIndex = 17;
             numericUpDownCallReplyLimit.TextAlign = HorizontalAlignment.Center;
             numericUpDownCallReplyLimit.Value = new decimal(new int[] { 10, 0, 0, 0 });
             // 
@@ -349,8 +350,6 @@
             // checkBoxMentionMode
             // 
             checkBoxMentionMode.AutoSize = true;
-            checkBoxMentionMode.Checked = true;
-            checkBoxMentionMode.CheckState = CheckState.Checked;
             checkBoxMentionMode.Location = new Point(279, 142);
             checkBoxMentionMode.Name = "checkBoxMentionMode";
             checkBoxMentionMode.Size = new Size(71, 19);
@@ -400,11 +399,22 @@
             numericUpDownEventThreshold.TextAlign = HorizontalAlignment.Center;
             numericUpDownEventThreshold.Value = new decimal(new int[] { 9999, 0, 0, 0 });
             // 
+            // checkBoxAddNostrNpub1
+            // 
+            checkBoxAddNostrNpub1.AutoSize = true;
+            checkBoxAddNostrNpub1.Location = new Point(279, 171);
+            checkBoxAddNostrNpub1.Name = "checkBoxAddNostrNpub1";
+            checkBoxAddNostrNpub1.Size = new Size(124, 19);
+            checkBoxAddNostrNpub1.TabIndex = 13;
+            checkBoxAddNostrNpub1.Text = "Add nostr:npub1...";
+            checkBoxAddNostrNpub1.UseVisualStyleBackColor = true;
+            // 
             // FormSetting
             // 
             AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
             ClientSize = new Size(424, 401);
+            Controls.Add(checkBoxAddNostrNpub1);
             Controls.Add(checkBoxUsePetname);
             Controls.Add(checkBoxMentionMode);
             Controls.Add(label9);
@@ -494,5 +504,6 @@
         private Label label10;
         internal CheckBox checkBoxSummarizeByEventCount;
         internal NumericUpDown numericUpDownEventThreshold;
+        internal CheckBox checkBoxAddNostrNpub1;
     }
 }

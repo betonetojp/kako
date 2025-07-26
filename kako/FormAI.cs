@@ -1,7 +1,6 @@
 ﻿using GenerativeAI;
 using GenerativeAI.Types;
 using System.Diagnostics;
-using System.Linq;
 
 namespace kako
 {

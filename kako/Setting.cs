@@ -29,7 +29,8 @@ namespace kako
             public bool UsePetname { get; set; } = true;
             public bool SummarizeEveryHour { get; set; } = false;
             public int SummarizeMinutes { get; set; } = 0;
-            public bool MentionMode { get; set; } = true;
+            public bool MentionMode { get; set; } = false;
+            public bool AddNostrNpub1 { get; set; } = false;
             public bool SummarizeByEventCount { get; set; } = false;
             public int EventThreshold { get; set; } = 100;
             public List<string> ForceCommands { get; set; } = [];
@@ -111,6 +112,11 @@ namespace kako
         {
             get => _data.MentionMode;
             set => _data.MentionMode = value;
+        }
+        public static bool AddNostrNpub1
+        {
+            get => _data.AddNostrNpub1;
+            set => _data.AddNostrNpub1 = value;
         }
         public static bool SummarizeByEventCount
         {
