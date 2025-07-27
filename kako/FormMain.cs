@@ -452,11 +452,18 @@ namespace kako
                                                 _summarizeEveryHour = true;
                                                 continue;
                                             }
+                                            if (content == "start2")
+                                            {
+                                                await PostAsync("＊ 投稿を有効にしました ＊", nostrEvent);
+                                                _summarizeByEventCount = true;
+                                                continue;
+                                            }
                                             // ストップコマンド
                                             if (content == "stop")
                                             {
-                                                await PostAsync("＊ 定期投稿を無効にしました ＊", nostrEvent);
+                                                await PostAsync("＊ 投稿を無効にしました ＊", nostrEvent);
                                                 _summarizeEveryHour = false;
+                                                _summarizeByEventCount = false;
                                                 continue;
                                             }
 
@@ -654,7 +661,8 @@ namespace kako
                             Debug.WriteLine($"{userName}: {content.Replace('\n', ' ')}");
 
                             // 受信投稿数によるまとめ投稿
-                            if (_summarizeByEventCount && dataGridViewNotes.Rows.Count >= _eventThreshold)
+                            //if (_summarizeByEventCount && dataGridViewNotes.Rows.Count >= _eventThreshold)
+                            if (_summarizeByEventCount && dataGridViewNotes.Rows.Count == _eventThreshold)
                             {
                                 await SummarizeAndPostAsync();
                             }

@@ -25,7 +25,8 @@ Tiny nostr summary bot client for windows.
 - F5キーで開くGemini画面でbotに投稿させずにまとめのテストやbotとのチャットを行うことができます。
 - reset と返信すると「Initialized」を外し、次回まとめ投稿前に「Model」と「Initial prompt」を再読み込みします。(Director専用)
 - start と返信すると「Summarize every hour at xx minutes」を有効にします。(Director専用)
-- stop と返信すると「Summarize every hour at xx minutes」を無効にします。(Director専用)
+- start2 と返信すると「Summarize every xxx events」を有効にします。(Director専用)
+- stop と返信すると「Summarize every hour at xx minutes」と「Summarize every xxx events」を無効にします。(Director専用)
 - open と返信すると「Open mode」を有効にします。(Director専用)
 - close と返信すると「Open mode」を無効にします。(Director専用)
 - 「Stamina」は毎時xx分にまとめを投稿した際と設定画面を開閉した時にリセットされます。
