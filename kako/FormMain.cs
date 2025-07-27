@@ -485,6 +485,16 @@ namespace kako
                                                 await PostAsync("＊ 返信応答を無効にしました ＊", nostrEvent);
                                                 continue;
                                             }
+
+                                            // クリアコマンド
+                                            if (content == "clear")
+                                            {
+                                                await PostAsync("＊ イベントをクリアしました ＊", nostrEvent);
+                                                dataGridViewNotes.Rows.Clear();
+                                                GC.Collect();
+                                                GC.WaitForPendingFinalizers();
+                                                continue;
+                                            }
                                         }
                                     }
 
