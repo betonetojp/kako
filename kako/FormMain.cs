@@ -229,8 +229,8 @@ namespace kako
                     var directorName = GetName(_director.ConvertToHex());
                     if (!string.IsNullOrEmpty(loginName))
                     {
-                        Text = $"kako - @{loginName} to {directorName}";
-                        notifyIcon.Text = $"kako - @{loginName} to {directorName}";
+                        Text = $"kakochat - @{loginName} to {directorName}";
+                        notifyIcon.Text = $"kakochat - @{loginName} to {directorName}";
                     }
                 }
 
@@ -366,8 +366,13 @@ namespace kako
                         }
 
                         #region テキストノート
-                        if (1 == nostrEvent.Kind)
+                        if (20000 == nostrEvent.Kind)
                         {
+                            var g = nostrEvent.GetTaggedData("g");
+                            if (g == null || g.Length == 0 || g[0] != "xn")
+                            {
+                                continue;
+                            }
                             string editedContent = content;
 
                             // nostr:npub1またはnostr:nprofile1が含まれている場合、@ユーザー名を取得
@@ -422,6 +427,17 @@ namespace kako
                             // オーナーコマンド
                             try
                             {
+                                // ユーザー表示名取得
+                                var n = nostrEvent.GetTaggedData("n");
+                                if (n != null && 0 < n.Length)
+                                {
+                                    userName = n[0];
+                                }
+                                else
+                                {
+                                    userName = GetUserName(nostrEvent.PublicKey);
+                                }
+
                                 whoToNotify = _director.ConvertToHex();
                                 if (nostrEvent.PublicKey == whoToNotify)
                                 {
@@ -531,7 +547,7 @@ namespace kako
                                         }
                                         else
                                         {
-                                            await _formAI.SendMessageAsync(GetUserName(nostrEvent.PublicKey) + "さんが呼んでいます。返事をしてください。");
+                                            await _formAI.SendMessageAsync(userName + "さんが呼んでいます。返事をしてください。");
                                             // 1秒待つ
                                             await Task.Delay(1000);
                                             await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'), nostrEvent);
@@ -549,6 +565,7 @@ namespace kako
                                                 else
                                                 {
                                                     await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'), nostrEvent);
+                                                    //await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'));
                                                 }
                                                 _alreadyPostedBreakMessage = true;
                                                 Debug.WriteLine("スタミナが切れました。");
@@ -557,6 +574,32 @@ namespace kako
                                     }
                                     else
                                     {
+                                        // contentが_callCommandsで始まっている時
+                                        var matchedCmd = _callCommands.FirstOrDefault(cmd => content.StartsWith(cmd));
+                                        if (matchedCmd != null)
+                                        {
+                                            //// コマンド部分を除いた引数を取得
+                                            //var argument = content.Substring(matchedCmd.Length).Trim();
+                                            // そのまま渡す
+                                            var argument = content;
+
+                                            // 例: AIに引数を送信して返答を投稿
+                                            await _formAI.SendMessageAsync(userName + "さんからの返信：\r\n" + argument);
+                                            await Task.Delay(1000);
+                                            await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'), nostrEvent);
+
+                                            _callReplyCount++;
+                                            if (_callReplyCount >= _callReplyLimit)
+                                            {
+                                                await _formAI.SendMessageAsync("疲れたからしばらく休むことを宣言ください。");
+                                                await Task.Delay(1000);
+                                                await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'));
+                                                _alreadyPostedBreakMessage = true;
+                                                Debug.WriteLine("スタミナが切れました。");
+                                            }
+                                            continue;
+                                        }
+
                                         // 返信の時
                                         var replyTags = nostrEvent.GetTaggedData("p");
                                         if (replyTags != null && 0 < replyTags.Length)
@@ -577,6 +620,7 @@ namespace kako
                                                     // 1秒待つ
                                                     await Task.Delay(1000);
                                                     await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'), nostrEvent);
+                                                    //await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'));
                                                     _callReplyCount++;
 
                                                     if (_callReplyCount >= _callReplyLimit)
@@ -590,7 +634,8 @@ namespace kako
                                                         }
                                                         else
                                                         {
-                                                            await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'), nostrEvent);
+                                                            //await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'), nostrEvent);
+                                                            await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'));
                                                         }
                                                         _alreadyPostedBreakMessage = true;
                                                         Debug.WriteLine("スタミナが切れました。");
@@ -609,16 +654,6 @@ namespace kako
 
                             // プロフィール購読
                             await NostrAccess.SubscribeProfilesAsync([nostrEvent.PublicKey]);
-
-                            // ユーザー取得
-                            user = await GetUserAsync(nostrEvent.PublicKey);
-                            // ユーザーが見つからない時は表示しない
-                            if (user == null)
-                            {
-                                continue;
-                            }
-                            // ユーザー表示名取得
-                            userName = GetUserName(nostrEvent.PublicKey);
 
                             bool isReply = false;
                             var e = nostrEvent.GetTaggedData("e");
@@ -814,16 +849,18 @@ namespace kako
             }
             if (_addClient)
             {
+                tags.Add(new NostrEventTag() { TagIdentifier = "n", Data = ["おもち"] });
+                tags.Add(new NostrEventTag() { TagIdentifier = "g", Data = ["xn"] });
                 tags.Add(new NostrEventTag()
                 {
                     TagIdentifier = "client",
-                    Data = ["kako"]
+                    Data = ["kakochat"]
                 });
             }
             // create a new event
             var newEvent = new NostrEvent()
             {
-                Kind = 1,
+                Kind = 20000,
                 Content = content.Replace("\r\n", "\n"),
                 Tags = tags
             };
@@ -859,7 +896,7 @@ namespace kako
                 tags.Add(new NostrEventTag()
                 {
                     TagIdentifier = "client",
-                    Data = ["kako"]
+                    Data = ["kakochat"]
                 });
             }
             // create a new event
@@ -909,7 +946,7 @@ namespace kako
                 tags.Add(new NostrEventTag()
                 {
                     TagIdentifier = "client",
-                    Data = ["kako"]
+                    Data = ["kakochat"]
                 });
             }
             // create a new event
@@ -957,7 +994,7 @@ namespace kako
                 tags.Add(new NostrEventTag()
                 {
                     TagIdentifier = "client",
-                    Data = ["kako"]
+                    Data = ["kakochat"]
                 });
             }
             // create a new event
@@ -1051,8 +1088,8 @@ namespace kako
                 // 別アカウントログイン失敗に備えてクリアしておく
                 _npubHex = string.Empty;
                 _followeesHexs.Clear();
-                Text = "kako";
-                notifyIcon.Text = "kako";
+                Text = "kakochat";
+                notifyIcon.Text = "kakochat";
 
                 // 秘密鍵と公開鍵取得
                 _npubHex = _nsec.GetNpubHex();
@@ -1085,8 +1122,8 @@ namespace kako
                     var directorName = GetName(_director.ConvertToHex());
                     if (!string.IsNullOrEmpty(loginName))
                     {
-                        Text = $"kako - @{loginName} to {directorName}";
-                        notifyIcon.Text = $"kako - @{loginName} to {directorName}";
+                        Text = $"kakochat - @{loginName} to {directorName}";
+                        notifyIcon.Text = $"kakochat - @{loginName} to {directorName}";
                     }
                 }
             }

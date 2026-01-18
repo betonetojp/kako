@@ -169,7 +169,7 @@ namespace kako
                 [
                         new NostrSubscriptionFilter
                         {
-                            Kinds = [1],
+                            Kinds = [20000],
                             Since = DateTimeOffset.Now - _timeSpan,
                         }
                 ]
