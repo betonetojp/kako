@@ -66,6 +66,9 @@ namespace kako
         public string Prompt { get; set; } = string.Empty;
         public string PromptForEveryMessage { get; set; } = string.Empty;
         public string PromptForReply { get; set; } = string.Empty;
+        public string CommunicationErrorMessage { get; set; } = "＊ 通信異常が発生しました ＊";
+        public int SleepStartHour { get; set; } = 0;
+        public int SleepEndHour { get; set; } = 0;
     }
 
     public static class Tools
