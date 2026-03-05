@@ -38,7 +38,7 @@
 
   <ItemGroup>
     <PackageReference Include="CredentialManagement" Version="1.0.2" />
-    <PackageReference Include="Google_GenerativeAI" Version="3.0.0" />
+    <PackageReference Include="Google_GenerativeAI" Version="3.6.3" />
   </ItemGroup>
 
   <ItemGroup>
