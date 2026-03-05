@@ -46,11 +46,12 @@ namespace kako
                         MainForm.LatestCreatedAt = DateTimeOffset.MinValue;
                     }
                 }
-                await SummarizeNotesAsync();
+                await SummarizeNotesAsync(true);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
+
             }
         }
 
@@ -66,13 +67,20 @@ namespace kako
             }
         }
 
-        internal async Task<bool> SummarizeNotesAsync()
+        internal async Task<bool> SummarizeNotesAsync(bool force = false)
         {
             textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = string.Empty));
+
+            var settings = Tools.LoadAISettings();
+            if (!force && IsSleepTime(settings))
+            {
+                return false;
+            }
 
             var apiKey = textBoxApiKey.Text;
 
             bool success = false;
+
             if (MainForm != null)
             {
                 if (!IsInitialized)
@@ -222,7 +230,8 @@ namespace kako
             try
             {
                 _model ??= new GenerativeModel(apiKey, textBoxModel.Text);
-                _model.UseGoogleSearch = true;
+                //_model.UseGoogleSearch = true;
+                _model.UseGoogleSearch = false;
             }
             catch (Exception ex)
             {
@@ -235,12 +244,32 @@ namespace kako
             }
         }
 
+        private bool IsSleepTime(AISettings settings)
+        {
+            if (settings.SleepStartHour == settings.SleepEndHour)
+            {
+                return false;
+            }
+
+            var current = DateTime.Now.Hour;
+            if (settings.SleepStartHour < settings.SleepEndHour)
+            {
+                return current >= settings.SleepStartHour && current < settings.SleepEndHour;
+            }
+            else
+            {
+                return current >= settings.SleepStartHour || current < settings.SleepEndHour;
+            }
+        }
+
         private void DisplayResult(string? result)
         {
             if (result == null)
             {
-                textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = "＊ 通信異常が発生しました ＊"));
+                var settings = Tools.LoadAISettings();
+                textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = settings.CommunicationErrorMessage));
                 //IsInitialized = false;
+
                 //checkBoxInitialized.Invoke((MethodInvoker)(() => checkBoxInitialized.Checked = IsInitialized));
                 if (MainForm != null)
                 {
@@ -288,6 +317,7 @@ namespace kako
         {
             try
             {
+                var oldSettings = Tools.LoadAISettings();
                 var settings = new AISettings
                 {
                     NumberOfPosts = (int)numericUpDownNumberOfPosts.Value,
@@ -295,9 +325,13 @@ namespace kako
                     Model = textBoxModel.Text,
                     Prompt = textBoxPrompt.Text,
                     PromptForEveryMessage = textBoxPromptForEveryMessage.Text,
-                    PromptForReply = textBoxPromptForReply.Text
+                    PromptForReply = textBoxPromptForReply.Text,
+                    SleepStartHour = oldSettings.SleepStartHour,
+                    SleepEndHour = oldSettings.SleepEndHour,
+                    CommunicationErrorMessage = oldSettings.CommunicationErrorMessage
                 };
                 Tools.SaveAISettings(settings);
+
 
                 // チャットセッションのバックアップデータがある場合は保存
                 if (_chat != null)

@@ -1768,6 +1768,12 @@ namespace kako
                 await Task.Delay(1000);
                 string answerText = string.Empty;
                 Invoke((MethodInvoker)(() => answerText = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n')));
+                // 空文字列の場合は投稿しない
+                if (string.IsNullOrEmpty(answerText))
+                {
+                    _isSummarizing = false;
+                    return;
+                }
                 if (string.IsNullOrEmpty(_director) || !_mentionMode)
                 {
                     await PostAsync(answerText);
