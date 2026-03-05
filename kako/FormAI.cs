@@ -230,7 +230,8 @@ namespace kako
             try
             {
                 _model ??= new GenerativeModel(apiKey, textBoxModel.Text);
-                _model.UseGoogleSearch = true;
+                //_model.UseGoogleSearch = true;
+                _model.UseGoogleSearch = false;
             }
             catch (Exception ex)
             {
