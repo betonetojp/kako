@@ -21,7 +21,7 @@ namespace kako
             // textBoxModelが空の時はデフォルト値を設定
             if (string.IsNullOrEmpty(textBoxModel.Text))
             {
-                textBoxModel.Text = "gemini-2.0-flash";
+                textBoxModel.Text = "gemini-2.5-flash";
             }
             // _chatSessionBackUpDataがある時はモデルを作成してIsInitializedをtrueにする
             if (_chatSessionBackUpData != null)
@@ -230,8 +230,9 @@ namespace kako
             try
             {
                 _model ??= new GenerativeModel(apiKey, textBoxModel.Text);
-                //_model.UseGoogleSearch = true;
-                _model.UseGoogleSearch = false;
+                // Use the setting from AI.json (not from UI)
+                var aiSettings = Tools.LoadAISettings();
+                _model.UseGoogleSearch = aiSettings.UseGoogleSearch;
             }
             catch (Exception ex)
             {
@@ -328,6 +329,7 @@ namespace kako
                     PromptForReply = textBoxPromptForReply.Text,
                     SleepStartHour = oldSettings.SleepStartHour,
                     SleepEndHour = oldSettings.SleepEndHour,
+                    UseGoogleSearch = oldSettings.UseGoogleSearch,
                     CommunicationErrorMessage = oldSettings.CommunicationErrorMessage
                 };
                 Tools.SaveAISettings(settings);

@@ -69,6 +69,7 @@ namespace kako
         public string CommunicationErrorMessage { get; set; } = "＊ 通信異常が発生しました ＊";
         public int SleepStartHour { get; set; } = 0;
         public int SleepEndHour { get; set; } = 0;
+        public bool UseGoogleSearch { get; set; } = false;
     }
 
     public static class Tools
@@ -393,7 +394,7 @@ namespace kako
             AISettings defaultSettings = new AISettings();
             defaultSettings.NumberOfPosts = 1000;
             defaultSettings.Turns = 30;
-            defaultSettings.Model = "gemini-2.0-flash";
+            defaultSettings.Model = "gemini-2.5-flash";
             defaultSettings.Prompt =
             "あなたの名前は「おもち」です。口数は少ないです。\r\n" +
             "やぶみリレーのまとめを紹介するのが仕事です。。\r\n" +

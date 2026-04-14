@@ -185,10 +185,10 @@
             linkLabelVersion.AutoSize = true;
             linkLabelVersion.Location = new Point(12, 377);
             linkLabelVersion.Name = "linkLabelVersion";
-            linkLabelVersion.Size = new Size(66, 15);
+            linkLabelVersion.Size = new Size(43, 15);
             linkLabelVersion.TabIndex = 21;
             linkLabelVersion.TabStop = true;
-            linkLabelVersion.Text = "v0.3.10beta";
+            linkLabelVersion.Text = "v0.3.11";
             linkLabelVersion.LinkClicked += LinkLabelVersion_LinkClicked;
             // 
             // checkBoxMinimizeToTray
