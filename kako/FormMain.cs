@@ -1,4 +1,4 @@
-﻿using kako.Properties;
+using kako.Properties;
 using NNostr.Client;
 using NNostr.Client.Protocols;
 using System.Configuration;
@@ -808,7 +808,41 @@ namespace kako
                 }
                 else
                 {
-                    tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [rootEvent.Id, string.Empty] });
+                    string? rootId = null;
+                    if (rootEvent.Tags != null)
+                    {
+                        foreach (var tag in rootEvent.Tags)
+                        {
+                            if (tag.TagIdentifier == "e" && tag.Data != null && tag.Data.Count > 2 && tag.Data[2] == "root")
+                            {
+                                rootId = tag.Data[0];
+                                break;
+                            }
+                        }
+
+                        if (rootId == null)
+                        {
+                            foreach (var tag in rootEvent.Tags)
+                            {
+                                if (tag.TagIdentifier == "e" && tag.Data != null && tag.Data.Count > 0 && !string.IsNullOrEmpty(tag.Data[0]))
+                                {
+                                    rootId = tag.Data[0];
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (rootId != null)
+                    {
+                        tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [rootId, string.Empty, "root"] });
+                        tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [rootEvent.Id, string.Empty, "reply"] });
+                    }
+                    else
+                    {
+                        tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [rootEvent.Id, string.Empty, "root"] });
+                    }
+
                     tags.Add(new NostrEventTag() { TagIdentifier = "p", Data = [rootEvent.PublicKey] });
                 }
             }
