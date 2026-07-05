@@ -68,7 +68,8 @@ namespace kako
         // 重複イベントIDを保存するリスト
         private readonly LinkedList<string> _displayedEventIds = new();
 
-        //private readonly LinkedList<NostrEvent> _noteEvents = new();
+        // 受信イベントのリレー追跡
+        private readonly Dictionary<string, List<string>> _eventSeenOn = [];
 
         private List<Client> _clients = [];
 
@@ -345,6 +346,23 @@ namespace kako
                 #region タイムライン購読
                 foreach (var nostrEvent in args.events)
                 {
+                    var relay = (sender as NostrClient)?.Relay?.ToString();
+                    if (!string.IsNullOrEmpty(relay))
+                    {
+                        lock (_eventSeenOn)
+                        {
+                            if (!_eventSeenOn.TryGetValue(nostrEvent.Id, out var relays))
+                            {
+                                relays = [];
+                                _eventSeenOn[nostrEvent.Id] = relays;
+                            }
+                            if (!relays.Contains(relay))
+                            {
+                                relays.Add(relay);
+                            }
+                        }
+                    }
+
                     if (RemoveCompletedEventIds(nostrEvent.Id))
                     {
                         continue;
@@ -802,9 +820,10 @@ namespace kako
             List<NostrEventTag> tags = [];
             if (rootEvent != null)
             {
+                var targetRelayHint = GetBestRelayHint(rootEvent.Id);
                 if (isQuote)
                 {
-                    tags.Add(new NostrEventTag() { TagIdentifier = "q", Data = [rootEvent.Id, string.Empty] });
+                    tags.Add(new NostrEventTag() { TagIdentifier = "q", Data = [rootEvent.Id, targetRelayHint, rootEvent.PublicKey] });
                 }
                 else
                 {
@@ -835,12 +854,14 @@ namespace kako
 
                     if (rootId != null)
                     {
-                        tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [rootId, string.Empty, "root"] });
-                        tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [rootEvent.Id, string.Empty, "reply"] });
+                        var rootRelayHint = GetBestRelayHint(rootId);
+                        if (string.IsNullOrEmpty(rootRelayHint)) rootRelayHint = targetRelayHint;
+                        tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [rootId, rootRelayHint, "root"] });
+                        tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [rootEvent.Id, targetRelayHint, "reply"] });
                     }
                     else
                     {
-                        tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [rootEvent.Id, string.Empty, "root"] });
+                        tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [rootEvent.Id, targetRelayHint, "root"] });
                     }
 
                     tags.Add(new NostrEventTag() { TagIdentifier = "p", Data = [rootEvent.PublicKey] });
@@ -930,7 +951,8 @@ namespace kako
             }
             // create tags
             List<NostrEventTag> tags = [];
-            tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [e] });
+            var targetRelayHint = GetBestRelayHint(e);
+            tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [e, targetRelayHint] });
             tags.Add(new NostrEventTag() { TagIdentifier = "p", Data = [p] });
             tags.Add(new NostrEventTag() { TagIdentifier = "k", Data = [k.ToString()] });
             if (!string.IsNullOrEmpty(url))
@@ -980,7 +1002,8 @@ namespace kako
             }
             // create tags
             List<NostrEventTag> tags = [];
-            tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [e, string.Empty] });
+            var targetRelayHint = GetBestRelayHint(e);
+            tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [e, targetRelayHint] });
             tags.Add(new NostrEventTag() { TagIdentifier = "p", Data = [p] });
             if (1 != k)
             {
@@ -1796,5 +1819,42 @@ namespace kako
             }
         }
         #endregion
+
+        private string GetBestRelayHint(string eventId)
+        {
+            if (string.IsNullOrEmpty(eventId)) return string.Empty;
+
+            List<string>? seenOn = null;
+            lock (_eventSeenOn)
+            {
+                if (_eventSeenOn.TryGetValue(eventId, out var list))
+                {
+                    seenOn = new List<string>(list);
+                }
+            }
+
+            if (seenOn == null || seenOn.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            if (NostrAccess.Relays != null)
+            {
+                foreach (var r in NostrAccess.Relays)
+                {
+                    var rStr = NormalizeRelayUrl(r.ToString());
+                    var found = seenOn.FirstOrDefault(s => NormalizeRelayUrl(s) == rStr);
+                    if (found != null) return found;
+                }
+            }
+
+            return seenOn[0];
+        }
+
+        private static string NormalizeRelayUrl(string url)
+        {
+            if (string.IsNullOrEmpty(url)) return string.Empty;
+            return url.Trim().TrimEnd('/');
+        }
     }
 }
