@@ -1,4 +1,4 @@
-﻿using GenerativeAI;
+using GenerativeAI;
 using GenerativeAI.Types;
 using System.Diagnostics;
 
@@ -264,7 +264,7 @@ namespace kako
 
         private void DisplayResult(string? result)
         {
-            if (result == null)
+            if (string.IsNullOrWhiteSpace(result))
             {
                 var settings = Tools.LoadAISettings();
                 textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = settings.CommunicationErrorMessage));

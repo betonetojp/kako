@@ -1,4 +1,4 @@
-﻿namespace kako
+namespace kako
 {
     partial class FormSetting
     {
@@ -188,7 +188,7 @@
             linkLabelVersion.Size = new Size(66, 15);
             linkLabelVersion.TabIndex = 21;
             linkLabelVersion.TabStop = true;
-            linkLabelVersion.Text = "v0.3.10beta";
+            linkLabelVersion.Text = "v0.4.2bitchat";
             linkLabelVersion.LinkClicked += LinkLabelVersion_LinkClicked;
             // 
             // checkBoxMinimizeToTray
