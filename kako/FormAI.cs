@@ -93,27 +93,18 @@ namespace kako
                 var notesContent = MainForm.GetNotesContent();
                 if (!IsInitialized)
                 {
-                    if (_chatSessionBackUpData != null)
-                    {
-                        // チャットセッションのバックアップデータがある場合は復元
-                        _chat = _model?.StartChat(_chatSessionBackUpData);
-                    }
-                    else
-                    {
-                        // チャットセッションのバックアップデータがない場合は新規作成
-                        _chat = _model?.StartChat();
-                    }
+                    _chat = _model?.StartChat();
                     IsInitialized = true;
 
                     checkBoxInitialized.Invoke((MethodInvoker)(() => checkBoxInitialized.Checked = IsInitialized));
-                    var initioalPrompt = textBoxPrompt.Invoke(() => textBoxPrompt.Text);
+                    var initialPrompt = textBoxPrompt.Invoke(() => textBoxPrompt.Text);
 
                     if (_chat != null)
                     {
                         var result = new GenerateContentResponse();
                         try
                         {
-                            result = await _chat.GenerateContentAsync(initioalPrompt);
+                            result = await _chat.GenerateContentAsync(initialPrompt);
                             SaveAISettings();
                             success = true;
                         }
@@ -169,25 +160,13 @@ namespace kako
 
             var apiKey = textBoxApiKey.Invoke(() => textBoxApiKey.Text);
 
-            if (!IsInitialized)
-            {
-                _model = null;
-                _chatSessionBackUpData = null;
-            }
             InitializeModel(apiKey);
 
             if (!IsInitialized)
             {
-                if (_chatSessionBackUpData != null)
-                {
-                    // チャットセッションのバックアップデータがある場合は復元
-                    _chat = _model?.StartChat(_chatSessionBackUpData);
-                }
-                else
-                {
-                    // チャットセッションのバックアップデータがない場合は新規作成
-                    _chat = _model?.StartChat();
-                }
+                _chat = _model?.StartChat();
+                IsInitialized = true;
+                checkBoxInitialized.Invoke((MethodInvoker)(() => checkBoxInitialized.Checked = IsInitialized));
             }
 
             bool success = false;
@@ -218,8 +197,11 @@ namespace kako
                 finally
                 {
                     DisplayResult(result.Text());
-                    textBoxChat.Text = string.Empty;
-                    textBoxChat.Focus();
+                    textBoxChat.Invoke((MethodInvoker)(() =>
+                    {
+                        textBoxChat.Text = string.Empty;
+                        textBoxChat.Focus();
+                    }));
                 }
             }
             return success;

@@ -18,7 +18,7 @@ namespace kako
         private const int WM_HOTKEY = 0x0312;
 
         private const string NostrPattern = @"nostr:(\w+)";
-        private const string ImagePattern = @"(https?:\/\/.*\.(jpg|jpeg|png|gif|bmp|webp))";
+        private const string ImagePattern = @"(https?:\/\/[^\s]*\.(jpg|jpeg|png|gif|bmp|webp))";
         private const string UrlPattern = @"(https?:\/\/[^\s]+)";
 
         [DllImport("user32.dll")]
@@ -115,7 +115,8 @@ namespace kako
             }
 
             // ボタンの画像をDPIに合わせて表示
-            float scale = CreateGraphics().DpiX / 96f;
+            using var graphics = CreateGraphics();
+            float scale = graphics.DpiX / 96f;
             int size = (int)(16 * scale);
             if (scale < 2.0f)
             {
@@ -186,20 +187,14 @@ namespace kako
         {
             try
             {
-                int connectCount;
+                int connectCount = await NostrAccess.ConnectAsync();
+
                 if (NostrAccess.Clients != null)
                 {
-                    connectCount = await NostrAccess.ConnectAsync();
-                }
-                else
-                {
-                    connectCount = await NostrAccess.ConnectAsync();
-
-                    if (NostrAccess.Clients != null)
-                    {
-                        NostrAccess.Clients.EventsReceived += OnClientOnUsersInfoEventsReceived;
-                        NostrAccess.Clients.EventsReceived += OnClientOnTimeLineEventsReceived;
-                    }
+                    NostrAccess.Clients.EventsReceived -= OnClientOnUsersInfoEventsReceived;
+                    NostrAccess.Clients.EventsReceived -= OnClientOnTimeLineEventsReceived;
+                    NostrAccess.Clients.EventsReceived += OnClientOnUsersInfoEventsReceived;
+                    NostrAccess.Clients.EventsReceived += OnClientOnTimeLineEventsReceived;
                 }
 
                 toolTipRelays.SetToolTip(labelRelays, string.Join("\n", NostrAccess.RelayStatusList));
@@ -725,8 +720,7 @@ namespace kako
                             Debug.WriteLine($"{userName}: {content.Replace('\n', ' ')}");
 
                             // 受信投稿数によるまとめ投稿
-                            //if (_summarizeByEventCount && dataGridViewNotes.Rows.Count >= _eventThreshold)
-                            if (_summarizeByEventCount && dataGridViewNotes.Rows.Count == _eventThreshold)
+                            if (_summarizeByEventCount && dataGridViewNotes.Rows.Count >= _eventThreshold)
                             {
                                 await SummarizeAndPostAsync();
                             }
@@ -888,7 +882,7 @@ namespace kako
 
         #region Stopボタン
         // Stopボタン
-        private void ButtonStop_Click(object sender, EventArgs e)
+        private async void ButtonStop_Click(object sender, EventArgs e)
         {
             if (NostrAccess.Clients == null)
             {
@@ -900,10 +894,12 @@ namespace kako
                 NostrAccess.CloseSubscriptions();
                 labelRelays.Text = "Close subscription.";
 
-                _ = NostrAccess.Clients.Disconnect();
+                await NostrAccess.Clients.Disconnect();
                 labelRelays.Text = "Disconnect.";
                 NostrAccess.Clients.Dispose();
                 NostrAccess.Clients = null;
+
+                Tools.SaveUsers(Users);
 
                 buttonStart.Enabled = true;
                 buttonStart.Focus();
@@ -1294,6 +1290,7 @@ namespace kako
             Setting.CallCommands = _callCommands;
             Setting.OpenMode = _openMode;
             Setting.CallReplyLimit = _callReplyLimit;
+            Setting.AppendUserId = _appendUserId;
 
             Setting.Save(_configPath);
             _clients = Tools.LoadClients();
@@ -1353,7 +1350,6 @@ namespace kako
                 userName = user.Name;
                 // 取得日更新
                 user.LastActivity = DateTime.Now;
-                Tools.SaveUsers(Users);
             }
             return userName;
         }
@@ -1387,7 +1383,6 @@ namespace kako
                 }
                 // 取得日更新
                 user.LastActivity = DateTime.Now;
-                Tools.SaveUsers(Users);
                 //Debug.WriteLine($"名前取得: {user.DisplayName} @{user.Name} 📛{user.PetName}");
             }
             return userName;
@@ -1400,12 +1395,17 @@ namespace kako
         /// <returns>ユーザー名 (ID:xxxxxxxx)</returns>
         private string GetAuthorNameWithId(string publicKeyHex)
         {
-            var name = GetUserName(publicKeyHex);
-            if (name == "???" && publicKeyHex.Length >= 8)
+            if (string.IsNullOrEmpty(publicKeyHex) || publicKeyHex.Length < 8)
             {
-                name = publicKeyHex[..8];
+                return GetUserName(publicKeyHex);
             }
-            if (_appendUserId && !string.IsNullOrEmpty(publicKeyHex) && publicKeyHex.Length >= 8)
+
+            var name = GetUserName(publicKeyHex);
+            if (name == "???")
+            {
+                return publicKeyHex[..8];
+            }
+            if (_appendUserId)
             {
                 return $"{name} (ID:{publicKeyHex[..8]})";
             }
@@ -1872,6 +1872,9 @@ namespace kako
                 }
 
                 labelRelays.Invoke((MethodInvoker)(() => labelRelays.Text = "Reconnected successfully."));
+
+                // ユーザー情報の保存
+                Tools.SaveUsers(Users);
 
                 // 定時まとめメンション
                 if (_summarizeEveryHour)
