@@ -549,10 +549,14 @@ namespace kako
                                             LastCreatedAt = DateTimeOffset.MinValue;
                                             LatestCreatedAt = DateTimeOffset.MinValue;
                                         }
-                                        bool success = await _formAI.SummarizeNotesAsync();
+                                        bool success = await _formAI.SummarizeNotesAsync(true);
                                         // 1秒待つ
                                         await Task.Delay(1000);
-                                        await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'), nostrEvent);
+                                        var answer = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n');
+                                        if (!string.IsNullOrWhiteSpace(answer))
+                                        {
+                                            await PostAsync(answer, nostrEvent);
+                                        }
                                         if (success)
                                         {
                                             dataGridViewNotes.Rows.Clear();
@@ -576,20 +580,34 @@ namespace kako
                                         else
                                         {
                                             var argument = content;
-                                            await _formAI.SendMessageAsync(userName + "さんからの返信：\r\n" + argument);
-                                            // 1秒待つ
-                                            await Task.Delay(1000);
-                                            await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'), nostrEvent);
-                                            _callReplyCount++;
-
-                                            if (_callReplyCount >= _callReplyLimit)
+                                            bool success = await _formAI.SendMessageAsync(userName + "さんからの返信：\r\n" + argument);
+                                            if (success)
                                             {
-                                                await _formAI.SendMessageAsync("疲れたからしばらく休むことを宣言ください。");
                                                 // 1秒待つ
                                                 await Task.Delay(1000);
-                                                await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'), nostrEvent);
-                                                _alreadyPostedBreakMessage = true;
-                                                Debug.WriteLine("スタミナが切れました。");
+                                                var answer = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n');
+                                                if (!string.IsNullOrWhiteSpace(answer))
+                                                {
+                                                    await PostAsync(answer, nostrEvent);
+                                                    _callReplyCount++;
+                                                }
+
+                                                if (_callReplyCount >= _callReplyLimit)
+                                                {
+                                                    bool breakSuccess = await _formAI.SendMessageAsync("疲れたからしばらく休むことを宣言ください。");
+                                                    if (breakSuccess)
+                                                    {
+                                                        // 1秒待つ
+                                                        await Task.Delay(1000);
+                                                        var breakAnswer = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n');
+                                                        if (!string.IsNullOrWhiteSpace(breakAnswer))
+                                                        {
+                                                            await PostAsync(breakAnswer, nostrEvent);
+                                                        }
+                                                    }
+                                                    _alreadyPostedBreakMessage = true;
+                                                    Debug.WriteLine("スタミナが切れました。");
+                                                }
                                             }
                                         }
                                         continue;
@@ -612,20 +630,34 @@ namespace kako
                                                 else
                                                 {
                                                     string promptForReply = _formAI.textBoxPromptForReply.Text;
-                                                    await _formAI.SendMessageAsync(promptForReply + "\r\n" + userName + "さんからの返信：\r\n" + content);
-                                                    // 1秒待つ
-                                                    await Task.Delay(1000);
-                                                    await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'), nostrEvent);
-                                                    _callReplyCount++;
-
-                                                    if (_callReplyCount >= _callReplyLimit)
+                                                    bool success = await _formAI.SendMessageAsync(promptForReply + "\r\n" + userName + "さんからの返信：\r\n" + content);
+                                                    if (success)
                                                     {
-                                                        await _formAI.SendMessageAsync("疲れたからしばらく休むことを宣言ください。");
                                                         // 1秒待つ
                                                         await Task.Delay(1000);
-                                                        await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'), nostrEvent);
-                                                        _alreadyPostedBreakMessage = true;
-                                                        Debug.WriteLine("スタミナが切れました。");
+                                                        var answer = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n');
+                                                        if (!string.IsNullOrWhiteSpace(answer))
+                                                        {
+                                                            await PostAsync(answer, nostrEvent);
+                                                            _callReplyCount++;
+                                                        }
+
+                                                        if (_callReplyCount >= _callReplyLimit)
+                                                        {
+                                                            bool breakSuccess = await _formAI.SendMessageAsync("疲れたからしばらく休むことを宣言ください。");
+                                                            if (breakSuccess)
+                                                            {
+                                                                // 1秒待つ
+                                                                await Task.Delay(1000);
+                                                                var breakAnswer = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n');
+                                                                if (!string.IsNullOrWhiteSpace(breakAnswer))
+                                                                {
+                                                                    await PostAsync(breakAnswer, nostrEvent);
+                                                                }
+                                                            }
+                                                            _alreadyPostedBreakMessage = true;
+                                                            Debug.WriteLine("スタミナが切れました。");
+                                                        }
                                                     }
                                                 }
                                             }
@@ -889,6 +921,10 @@ namespace kako
         /// <returns></returns>
         private async Task PostAsync(string content, NostrEvent? rootEvent = null, bool isQuote = false)
         {
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                return;
+            }
             if (NostrAccess.Clients == null)
             {
                 return;
@@ -957,6 +993,10 @@ namespace kako
 
         private async Task MentionAsync(string content)
         {
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                return;
+            }
             if (NostrAccess.Clients == null)
             {
                 return;
