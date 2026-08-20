@@ -1868,7 +1868,7 @@ namespace kako
                 if (!string.IsNullOrEmpty(_npubHex))
                 {
                     // フォロイーを購読する
-                    await NostrAccess.SubscribeFollowsAsync(_npubHex);
+                    await NostrAccess.SubscribeFollowsAsync(_director.ConvertToHex());
                 }
 
                 labelRelays.Invoke((MethodInvoker)(() => labelRelays.Text = "Reconnected successfully."));
