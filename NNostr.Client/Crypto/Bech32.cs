@@ -26,7 +26,7 @@ using System.Diagnostics;
 
 namespace NNostr.Client.Crypto;
 
-internal static class Bech32Engine
+public static class Bech32Engine
 {
     // charset is the sequence of ascii characters that make up the bech32
     // alphabet.  Each character represents a 5-bit squashed byte.
