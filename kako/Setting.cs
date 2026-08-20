@@ -38,6 +38,7 @@ namespace kako
             public bool OpenMode { get; set; } = false;
             public int CallReplyLimit { get; set; } = 10;
             public string ChannelId { get; set; } = string.Empty;
+            public bool AppendUserId { get; set; } = true;
 
             public string GridColor { get; set; } = "#FF1493";
             public string ReactionColor { get; set; } = "#FFFFE0";
@@ -153,6 +154,11 @@ namespace kako
         {
             get => _data.ChannelId;
             set => _data.ChannelId = value;
+        }
+        public static bool AppendUserId
+        {
+            get => _data.AppendUserId;
+            set => _data.AppendUserId = value;
         }
 
         public static string GridColor

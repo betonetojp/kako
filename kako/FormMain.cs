@@ -63,6 +63,7 @@ namespace kako
         private bool _openMode;
         private int _callReplyLimit;
         private string _channelId = string.Empty;
+        private bool _appendUserId = true;
 
         private double _tempOpacity = 1.00;
 
@@ -167,6 +168,7 @@ namespace kako
             _openMode = Setting.OpenMode;
             _callReplyLimit = Setting.CallReplyLimit;
             _channelId = Setting.ChannelId;
+            _appendUserId = Setting.AppendUserId;
 
             dataGridViewNotes.Columns["name"].Width = Setting.NameColumnWidth;
             dataGridViewNotes.GridColor = Tools.HexToColor(Setting.GridColor);
@@ -580,7 +582,8 @@ namespace kako
                                         else
                                         {
                                             var argument = content;
-                                            bool success = await _formAI.SendMessageAsync(userName + "さんからの返信：\r\n" + argument);
+                                            var authorWithId = GetAuthorNameWithId(nostrEvent.PublicKey);
+                                            bool success = await _formAI.SendMessageAsync(authorWithId + "さんからの返信：\r\n" + argument);
                                             if (success)
                                             {
                                                 // 1秒待つ
@@ -630,7 +633,8 @@ namespace kako
                                                 else
                                                 {
                                                     string promptForReply = _formAI.textBoxPromptForReply.Text;
-                                                    bool success = await _formAI.SendMessageAsync(promptForReply + "\r\n" + userName + "さんからの返信：\r\n" + content);
+                                                    var authorWithId = GetAuthorNameWithId(nostrEvent.PublicKey);
+                                                    bool success = await _formAI.SendMessageAsync(promptForReply + "\r\n" + authorWithId + "さんからの返信：\r\n" + content);
                                                     if (success)
                                                     {
                                                         // 1秒待つ
@@ -1376,6 +1380,25 @@ namespace kako
             }
             return userName;
         }
+
+        /// <summary>
+        /// ユーザー表示名と短縮ID（設定有効時）を取得する
+        /// </summary>
+        /// <param name="publicKeyHex">公開鍵HEX</param>
+        /// <returns>ユーザー名 (ID:xxxxxxxx)</returns>
+        private string GetAuthorNameWithId(string publicKeyHex)
+        {
+            var name = GetUserName(publicKeyHex);
+            if (name == "???" && publicKeyHex.Length >= 8)
+            {
+                name = publicKeyHex[..8];
+            }
+            if (_appendUserId && !string.IsNullOrEmpty(publicKeyHex) && publicKeyHex.Length >= 8)
+            {
+                return $"{name} (ID:{publicKeyHex[..8]})";
+            }
+            return name;
+        }
         #endregion
 
         #region ミュートされているか確認する
@@ -1772,7 +1795,16 @@ namespace kako
                         continue;
                     }
                     notes.Append(row.Cells["time"].Value?.ToString() + "\r\n");
-                    notes.Append(row.Cells["name"].Value?.ToString()?.Substring(2) + "\r\n");
+                    var authorName = row.Cells["name"].Value?.ToString()?.Substring(2) ?? string.Empty;
+                    var pubkey = row.Cells["pubkey"].Value?.ToString();
+                    if (_appendUserId && !string.IsNullOrEmpty(pubkey) && pubkey.Length >= 8)
+                    {
+                        notes.Append($"{authorName} (ID:{pubkey[..8]})\r\n");
+                    }
+                    else
+                    {
+                        notes.Append(authorName + "\r\n");
+                    }
                     notes.Append(row.Cells["note"].Value?.ToString() + "\r\n");
                     notes.AppendLine();
                     count++;
