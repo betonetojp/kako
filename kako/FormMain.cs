@@ -62,11 +62,15 @@ namespace kako
         private List<string> _callCommands = [];
         private bool _openMode;
         private int _callReplyLimit;
+        private string _channelId = string.Empty;
 
         private double _tempOpacity = 1.00;
 
         // 重複イベントIDを保存するリスト
         private readonly LinkedList<string> _displayedEventIds = new();
+
+        // プロフィール取得中の公開鍵
+        private readonly HashSet<string> _fetchingProfileHexs = [];
 
         // 受信イベントのリレー追跡
         private readonly Dictionary<string, List<string>> _eventSeenOn = [];
@@ -162,6 +166,7 @@ namespace kako
             _callCommands = Setting.CallCommands;
             _openMode = Setting.OpenMode;
             _callReplyLimit = Setting.CallReplyLimit;
+            _channelId = Setting.ChannelId;
 
             dataGridViewNotes.Columns["name"].Width = Setting.NameColumnWidth;
             dataGridViewNotes.GridColor = Tools.HexToColor(Setting.GridColor);
@@ -213,7 +218,7 @@ namespace kako
                         break;
                 }
 
-                await NostrAccess.SubscribeAsync();
+                await NostrAccess.SubscribeAsync(_channelId.ConvertEventIdToHex());
 
                 buttonStart.Enabled = false;
                 buttonStop.Enabled = true;
@@ -230,8 +235,8 @@ namespace kako
                     var directorName = GetName(_director.ConvertToHex());
                     if (!string.IsNullOrEmpty(loginName))
                     {
-                        Text = $"kako - @{loginName} to {directorName}";
-                        notifyIcon.Text = $"kako - @{loginName} to {directorName}";
+                        Text = $"kako [channel] - @{loginName} to {directorName}";
+                        notifyIcon.Text = $"kako [channel] - @{loginName} to {directorName}";
                     }
                 }
 
@@ -374,7 +379,6 @@ namespace kako
                     if (content != null)
                     {
                         string userName = string.Empty;
-                        User? user = null;
 
                         // フォロイーチェック
                         string headMark = "-";
@@ -383,9 +387,19 @@ namespace kako
                             headMark = "*";
                         }
 
-                        #region テキストノート
-                        if (1 == nostrEvent.Kind)
+                        #region チャンネルメッセージ
+                        if (42 == nostrEvent.Kind)
                         {
+                            var targetChannelHex = _channelId.ConvertEventIdToHex();
+                            if (!string.IsNullOrEmpty(targetChannelHex))
+                            {
+                                var eTags = nostrEvent.GetTaggedData("e");
+                                if (eTags == null || !eTags.Contains(targetChannelHex, StringComparer.OrdinalIgnoreCase))
+                                {
+                                    continue;
+                                }
+                            }
+
                             string editedContent = content;
 
                             // nostr:npub1またはnostr:nprofile1が含まれている場合、@ユーザー名を取得
@@ -433,6 +447,17 @@ namespace kako
                             if (_npubHex == nostrEvent.PublicKey)
                             {
                                 continue;
+                            }
+
+                            // プロフィール購読（通常リレー＋インデクサリレー）
+                            await NostrAccess.SubscribeProfilesAsync([nostrEvent.PublicKey]);
+                            FetchProfileIfNeeded(nostrEvent.PublicKey);
+
+                            // ユーザー表示名取得
+                            userName = GetUserName(nostrEvent.PublicKey);
+                            if (userName == "???" && nostrEvent.PublicKey.Length >= 8)
+                            {
+                                userName = nostrEvent.PublicKey[..8];
                             }
 
                             string whoToNotify = string.Empty;
@@ -540,8 +565,9 @@ namespace kako
 
                                 if (_openMode || nostrEvent.PublicKey == whoToNotify)
                                 {
-                                    // 呼出コマンド
-                                    if (_callCommands.Contains(content))
+                                    // contentが_callCommandsで始まっている時（先頭一致判定）
+                                    var matchedCmd = _callCommands.FirstOrDefault(cmd => content.StartsWith(cmd));
+                                    if (matchedCmd != null)
                                     {
                                         if (_alreadyPostedBreakMessage)
                                         {
@@ -549,7 +575,8 @@ namespace kako
                                         }
                                         else
                                         {
-                                            await _formAI.SendMessageAsync(GetUserName(nostrEvent.PublicKey) + "さんが呼んでいます。返事をしてください。");
+                                            var argument = content;
+                                            await _formAI.SendMessageAsync(userName + "さんからの返信：\r\n" + argument);
                                             // 1秒待つ
                                             await Task.Delay(1000);
                                             await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'), nostrEvent);
@@ -560,18 +587,12 @@ namespace kako
                                                 await _formAI.SendMessageAsync("疲れたからしばらく休むことを宣言ください。");
                                                 // 1秒待つ
                                                 await Task.Delay(1000);
-                                                if (_openMode)
-                                                {
-                                                    await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'));
-                                                }
-                                                else
-                                                {
-                                                    await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'), nostrEvent);
-                                                }
+                                                await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'), nostrEvent);
                                                 _alreadyPostedBreakMessage = true;
                                                 Debug.WriteLine("スタミナが切れました。");
                                             }
                                         }
+                                        continue;
                                     }
                                     else
                                     {
@@ -591,7 +612,7 @@ namespace kako
                                                 else
                                                 {
                                                     string promptForReply = _formAI.textBoxPromptForReply.Text;
-                                                    await _formAI.SendMessageAsync(promptForReply + "\r\n" + GetUserName(nostrEvent.PublicKey) + "さんからの返信：\r\n" + content);
+                                                    await _formAI.SendMessageAsync(promptForReply + "\r\n" + userName + "さんからの返信：\r\n" + content);
                                                     // 1秒待つ
                                                     await Task.Delay(1000);
                                                     await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'), nostrEvent);
@@ -602,14 +623,7 @@ namespace kako
                                                         await _formAI.SendMessageAsync("疲れたからしばらく休むことを宣言ください。");
                                                         // 1秒待つ
                                                         await Task.Delay(1000);
-                                                        if (_openMode)
-                                                        {
-                                                            await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'));
-                                                        }
-                                                        else
-                                                        {
-                                                            await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'), nostrEvent);
-                                                        }
+                                                        await PostAsync(_formAI.textBoxAnswer.Text.TrimEnd('\r', '\n'), nostrEvent);
                                                         _alreadyPostedBreakMessage = true;
                                                         Debug.WriteLine("スタミナが切れました。");
                                                     }
@@ -624,19 +638,6 @@ namespace kako
                                 Debug.WriteLine($"通知先変換失敗: {ex.Message}");
                                 continue;
                             }
-
-                            // プロフィール購読
-                            await NostrAccess.SubscribeProfilesAsync([nostrEvent.PublicKey]);
-
-                            // ユーザー取得
-                            user = await GetUserAsync(nostrEvent.PublicKey);
-                            // ユーザーが見つからない時は表示しない
-                            if (user == null)
-                            {
-                                continue;
-                            }
-                            // ユーザー表示名取得
-                            userName = GetUserName(nostrEvent.PublicKey);
 
                             bool isReply = false;
                             var e = nostrEvent.GetTaggedData("e");
@@ -752,25 +753,101 @@ namespace kako
         }
         #endregion
 
-        #region ユーザー取得
-        private async Task<User?> GetUserAsync(string pubkey)
+        #region プロフィール取得（インデクサ連携）
+        private void FetchProfileIfNeeded(string pubkey)
         {
-            User? user = null;
-            int retryCount = 0;
-            while (retryCount < 10)
+            if (string.IsNullOrEmpty(pubkey)) return;
+
+            // 既に有効な表示名がある場合は再取得不要
+            if (Users.TryGetValue(pubkey, out var existingUser) && existingUser != null)
             {
-                Debug.WriteLine($"retryCount = {retryCount} {GetUserName(pubkey)}");
-                Users.TryGetValue(pubkey, out user);
-                // ユーザーが見つかった場合、ループを抜ける
-                if (user != null)
+                if (!string.IsNullOrEmpty(existingUser.DisplayName) || !string.IsNullOrEmpty(existingUser.Name))
                 {
-                    break;
+                    return;
                 }
-                // 一定時間待機してから再試行
-                await Task.Delay(100);
-                retryCount++;
             }
-            return user;
+
+            lock (_fetchingProfileHexs)
+            {
+                if (_fetchingProfileHexs.Contains(pubkey)) return;
+                _fetchingProfileHexs.Add(pubkey);
+            }
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var profileEvent = await NostrAccess.FetchProfileFromIndexerAsync(pubkey);
+                    if (profileEvent?.Content != null)
+                    {
+                        var newUserData = Tools.JsonToUser(profileEvent.Content, profileEvent.CreatedAt);
+                        if (newUserData != null)
+                        {
+                            string resolvedName = string.Empty;
+                            lock (Users)
+                            {
+                                DateTimeOffset? createdAt = DateTimeOffset.MinValue;
+                                if (Users.TryGetValue(pubkey, out User? existingUserData))
+                                {
+                                    createdAt = existingUserData?.CreatedAt;
+                                    newUserData.PetName = existingUserData?.PetName;
+                                    if (false == existingUserData?.Mute)
+                                    {
+                                        newUserData.Mute = false;
+                                    }
+                                }
+                                if (createdAt == null || (createdAt < newUserData.CreatedAt))
+                                {
+                                    newUserData.LastActivity = DateTime.Now;
+                                    Users[pubkey] = newUserData;
+                                    Tools.SaveUsers(Users);
+                                    Debug.WriteLine($"[Indexer] プロフィール取得成功: {newUserData.DisplayName} @{newUserData.Name} ({pubkey[..8]})");
+                                }
+                            }
+
+                            resolvedName = GetUserName(pubkey);
+
+                            // グリッド上の名前・ツールチップを更新
+                            if (dataGridViewNotes.IsHandleCreated)
+                            {
+                                dataGridViewNotes.BeginInvoke(new Action(() => UpdateGridProfile(pubkey, resolvedName)));
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[Indexer] プロフィール取得失敗: {ex.Message}");
+                }
+                finally
+                {
+                    lock (_fetchingProfileHexs)
+                    {
+                        _fetchingProfileHexs.Remove(pubkey);
+                    }
+                }
+            });
+        }
+
+        private void UpdateGridProfile(string pubkey, string name)
+        {
+            try
+            {
+                foreach (DataGridViewRow row in dataGridViewNotes.Rows)
+                {
+                    if (row.Cells["pubkey"]?.Value?.ToString() == pubkey)
+                    {
+                        var currentNameCell = row.Cells["name"]?.Value?.ToString();
+                        var headMark = currentNameCell?.StartsWith("*") == true ? "* " : "- ";
+                        row.Cells["name"].Value = $"{headMark}{name}";
+                        row.Cells["avatar"].ToolTipText = name;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"UpdateGridProfile エラー: {ex.Message}");
+            }
         }
         #endregion
 
@@ -807,7 +884,7 @@ namespace kako
 
         #region 投稿処理
         /// <summary>
-        /// 投稿処理
+        /// 投稿処理（チャンネルメッセージ）
         /// </summary>
         /// <returns></returns>
         private async Task PostAsync(string content, NostrEvent? rootEvent = null, bool isQuote = false)
@@ -818,6 +895,13 @@ namespace kako
             }
             // create tags
             List<NostrEventTag> tags = [];
+            var channelHex = _channelId.ConvertEventIdToHex();
+            if (!string.IsNullOrEmpty(channelHex))
+            {
+                var channelRelayHint = GetBestRelayHint(channelHex);
+                tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [channelHex, channelRelayHint, "root"] });
+            }
+
             if (rootEvent != null)
             {
                 var targetRelayHint = GetBestRelayHint(rootEvent.Id);
@@ -827,41 +911,13 @@ namespace kako
                 }
                 else
                 {
-                    string? rootId = null;
-                    if (rootEvent.Tags != null)
+                    if (string.IsNullOrEmpty(channelHex))
                     {
-                        foreach (var tag in rootEvent.Tags)
-                        {
-                            if (tag.TagIdentifier == "e" && tag.Data != null && tag.Data.Count > 2 && tag.Data[2] == "root")
-                            {
-                                rootId = tag.Data[0];
-                                break;
-                            }
-                        }
-
-                        if (rootId == null)
-                        {
-                            foreach (var tag in rootEvent.Tags)
-                            {
-                                if (tag.TagIdentifier == "e" && tag.Data != null && tag.Data.Count > 0 && !string.IsNullOrEmpty(tag.Data[0]))
-                                {
-                                    rootId = tag.Data[0];
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    if (rootId != null)
-                    {
-                        var rootRelayHint = GetBestRelayHint(rootId);
-                        if (string.IsNullOrEmpty(rootRelayHint)) rootRelayHint = targetRelayHint;
-                        tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [rootId, rootRelayHint, "root"] });
-                        tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [rootEvent.Id, targetRelayHint, "reply"] });
+                        tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [rootEvent.Id, targetRelayHint, "root"] });
                     }
                     else
                     {
-                        tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [rootEvent.Id, targetRelayHint, "root"] });
+                        tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [rootEvent.Id, targetRelayHint, "reply"] });
                     }
 
                     tags.Add(new NostrEventTag() { TagIdentifier = "p", Data = [rootEvent.PublicKey] });
@@ -878,7 +934,7 @@ namespace kako
             // create a new event
             var newEvent = new NostrEvent()
             {
-                Kind = 1,
+                Kind = 42,
                 Content = content.Replace("\r\n", "\n"),
                 Tags = tags
             };
@@ -907,6 +963,13 @@ namespace kako
             }
             // create tags
             List<NostrEventTag> tags = [];
+            var channelHex = _channelId.ConvertEventIdToHex();
+            if (!string.IsNullOrEmpty(channelHex))
+            {
+                var channelRelayHint = GetBestRelayHint(channelHex);
+                tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [channelHex, channelRelayHint, "root"] });
+            }
+
             tags.Add(new NostrEventTag() { TagIdentifier = "p", Data = [_director.ConvertToHex()] });
 
             if (_addClient)
@@ -920,7 +983,7 @@ namespace kako
             // create a new event
             var newEvent = new NostrEvent()
             {
-                Kind = 1,
+                Kind = 42,
                 Content = (_addNostrNpub1 ? "nostr:" + _director + " " : "") + content.Replace("\r\n", "\n"),
                 Tags = tags
             };
@@ -1096,6 +1159,7 @@ namespace kako
             _callReplyLimit = (int)_formSetting.numericUpDownCallReplyLimit.Value;
 
             _nsec = _formSetting.textBoxNsec.Text;
+            _channelId = Setting.ChannelId;
 
             // タイマーの初期化
             SetDailyTimer();
@@ -1108,8 +1172,8 @@ namespace kako
                 // 別アカウントログイン失敗に備えてクリアしておく
                 _npubHex = string.Empty;
                 _followeesHexs.Clear();
-                Text = "kako";
-                notifyIcon.Text = "kako";
+                Text = "kako [channel]";
+                notifyIcon.Text = "kako [channel]";
 
                 // 秘密鍵と公開鍵取得
                 _npubHex = _nsec.GetNpubHex();
@@ -1142,8 +1206,8 @@ namespace kako
                     var directorName = GetName(_director.ConvertToHex());
                     if (!string.IsNullOrEmpty(loginName))
                     {
-                        Text = $"kako - @{loginName} to {directorName}";
-                        notifyIcon.Text = $"kako - @{loginName} to {directorName}";
+                        Text = $"kako [channel] - @{loginName} to {directorName}";
+                        notifyIcon.Text = $"kako [channel] - @{loginName} to {directorName}";
                     }
                 }
             }
@@ -1714,7 +1778,7 @@ namespace kako
 
                 await NostrAccess.Clients.Disconnect();
                 await NostrAccess.ConnectAsync();
-                await NostrAccess.SubscribeAsync();
+                await NostrAccess.SubscribeAsync(_channelId.ConvertEventIdToHex());
 
                 // ログイン済みの時
                 if (!string.IsNullOrEmpty(_npubHex))

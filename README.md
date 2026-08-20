@@ -1,4 +1,4 @@
-﻿# kako
+# kako
 
 Tiny nostr summary bot client for windows.
 
@@ -32,6 +32,12 @@ Tiny nostr summary bot client for windows.
  - clear と返信すると受信中のイベント一覧（画面の表示）をクリアします。(Director専用)
 - 「Stamina」は毎時xx分にまとめを投稿した際と設定画面を開閉した時にリセットされます。
 - 「Director's npub」が設定されていないとDirector専用コマンドに反応しません。
+
+## `kako.config`（チャンネル設定等）
+- `ChannelId`
+  - チャンネル（NIP-28 kind: 42）専用ボットとして動作する対象のチャンネル作成イベントID（kind: 40 の ID）を指定します。
+  - `note1...`、`nevent1...`、または 64 文字の HEX 形式で指定できます。
+  - アプリ終了時に `kako.config` をテキストエディタで開き、`<ChannelId>...</ChannelId>` のタグに設定して保存してください。
 
 ## `AI.json`（UI からは編集できない設定）
 一部の AI に関する設定はアプリの起動ディレクトリにある `AI.json` に保存されます。設定画面からは変更できない項目があり、次の項目は `AI.json` を直接編集してください。

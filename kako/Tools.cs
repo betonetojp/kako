@@ -1,7 +1,8 @@
-﻿using CredentialManagement;
+using CredentialManagement;
 using GenerativeAI.Types;
 using NBitcoin.Secp256k1;
 using NNostr.Client;
+using NNostr.Client.Crypto;
 using NNostr.Client.JsonConverters;
 using NNostr.Client.Protocols;
 using System.Configuration;
@@ -552,6 +553,45 @@ namespace kako
                 Debug.WriteLine(ex.Message);
                 return string.Empty;
             }
+        }
+
+        /// <summary>
+        /// note1, nevent1, またはHEX文字列をイベントIDのHEXに変換する
+        /// </summary>
+        /// <param name="eventId">note1, nevent1, またはHEX</param>
+        /// <returns>HEX文字列</returns>
+        public static string ConvertEventIdToHex(this string eventId)
+        {
+            if (string.IsNullOrWhiteSpace(eventId)) return string.Empty;
+            var trimmed = eventId.Trim();
+            try
+            {
+                if (trimmed.StartsWith("note1", StringComparison.OrdinalIgnoreCase))
+                {
+                    Bech32Engine.Decode(trimmed, out var hrp, out var data);
+                    if (hrp == "note")
+                    {
+                        return Convert.ToHexString(data).ToLowerInvariant();
+                    }
+                }
+                else if (trimmed.StartsWith("nevent1", StringComparison.OrdinalIgnoreCase))
+                {
+                    var note = trimmed.FromNIP19Note();
+                    if (note is NIP19.NostrEventNote eventNote)
+                    {
+                        return eventNote.EventId.ToLowerInvariant();
+                    }
+                }
+                else if (trimmed.Length == 64 && trimmed.All(Uri.IsHexDigit))
+                {
+                    return trimmed.ToLowerInvariant();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"ConvertEventIdToHex error: {ex.Message}");
+            }
+            return trimmed;
         }
 
         /// <summary>

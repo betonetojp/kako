@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
@@ -37,6 +37,7 @@ namespace kako
             public List<string> CallCommands { get; set; } = [];
             public bool OpenMode { get; set; } = false;
             public int CallReplyLimit { get; set; } = 10;
+            public string ChannelId { get; set; } = string.Empty;
 
             public string GridColor { get; set; } = "#FF1493";
             public string ReactionColor { get; set; } = "#FFFFE0";
@@ -147,6 +148,11 @@ namespace kako
         {
             get => _data.CallReplyLimit;
             set => _data.CallReplyLimit = value;
+        }
+        public static string ChannelId
+        {
+            get => _data.ChannelId;
+            set => _data.ChannelId = value;
         }
 
         public static string GridColor
