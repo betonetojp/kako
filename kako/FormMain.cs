@@ -305,25 +305,27 @@ namespace kako
                         var newUserData = Tools.JsonToUser(nostrEvent.Content, nostrEvent.CreatedAt);
                         if (newUserData != null)
                         {
-                            DateTimeOffset? cratedAt = DateTimeOffset.MinValue;
-                            if (Users.TryGetValue(nostrEvent.PublicKey, out User? existingUserData))
+                            lock (Users)
                             {
-                                cratedAt = existingUserData?.CreatedAt;
-                            }
-                            if (false == existingUserData?.Mute)
-                            {
-                                // 既にミュートオフのMostrアカウントのミュートを解除
-                                newUserData.Mute = false;
-                            }
-                            if (cratedAt == null || (cratedAt < newUserData.CreatedAt))
-                            {
-                                newUserData.LastActivity = DateTime.Now;
-                                newUserData.PetName = existingUserData?.PetName;
-                                Tools.SaveUsers(Users);
-                                // 辞書に追加（上書き）
-                                Users[nostrEvent.PublicKey] = newUserData;
-                                Debug.WriteLine($"cratedAt updated {cratedAt} -> {newUserData.CreatedAt}");
-                                Debug.WriteLine($"プロフィール更新: {newUserData.DisplayName} @{newUserData.Name}");
+                                DateTimeOffset? createdAt = DateTimeOffset.MinValue;
+                                if (Users.TryGetValue(nostrEvent.PublicKey, out User? existingUserData))
+                                {
+                                    createdAt = existingUserData?.CreatedAt;
+                                }
+                                if (false == existingUserData?.Mute)
+                                {
+                                    // 既にミュートオフのMostrアカウントのミュートを解除
+                                    newUserData.Mute = false;
+                                }
+                                if (createdAt == null || (createdAt < newUserData.CreatedAt))
+                                {
+                                    newUserData.LastActivity = DateTime.Now;
+                                    newUserData.PetName = existingUserData?.PetName;
+                                    // 辞書に追加（上書き）
+                                    Users[nostrEvent.PublicKey] = newUserData;
+                                    Debug.WriteLine($"createdAt updated {createdAt} -> {newUserData.CreatedAt}");
+                                    Debug.WriteLine($"プロフィール更新: {newUserData.DisplayName} @{newUserData.Name}");
+                                }
                             }
                         }
                     }
@@ -829,7 +831,6 @@ namespace kako
                                 {
                                     newUserData.LastActivity = DateTime.Now;
                                     Users[pubkey] = newUserData;
-                                    Tools.SaveUsers(Users);
                                     Debug.WriteLine($"[Indexer] プロフィール取得成功: {newUserData.DisplayName} @{newUserData.Name} ({pubkey[..8]})");
                                 }
                             }
