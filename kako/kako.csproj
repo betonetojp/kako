@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup Label="Globals" />
 
@@ -39,7 +39,7 @@
 
   <ItemGroup>
     <PackageReference Include="CredentialManagement" Version="1.0.2" />
-    <PackageReference Include="Google_GenerativeAI" Version="3.6.6" />
+    <PackageReference Include="Google_GenerativeAI" Version="3.6.7" />
   </ItemGroup>
 
   <ItemGroup>
