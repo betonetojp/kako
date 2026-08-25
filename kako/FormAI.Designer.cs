@@ -172,7 +172,7 @@ namespace kako
             textBoxPromptForEveryMessage.ScrollBars = ScrollBars.Vertical;
             textBoxPromptForEveryMessage.Size = new Size(370, 85);
             textBoxPromptForEveryMessage.TabIndex = 5;
-            textBoxPromptForEveryMessage.Text = "200文字以内にしてください。\r\nやぶみリレーのまとめであることが伝わるようにしてください。\r\nタイムラインがない場合は新着投稿がない旨を伝えてください。\r\n以下、タイムライン\r\n";
+            textBoxPromptForEveryMessage.Text = "200文字以内にしてください。\r\nタイムラインがない場合は新着投稿がない旨を伝えてください。\r\n以下、タイムライン\r\n";
             // 
             // label3
             // 
