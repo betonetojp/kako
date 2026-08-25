@@ -2,9 +2,27 @@ using System.Diagnostics;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
-
 namespace kako
 {
+    /// <summary>
+    /// ボット動作モード
+    /// </summary>
+    public enum BotMode
+    {
+        /// <summary>
+        /// 通常テキストノート (Kind 1)
+        /// </summary>
+        Note = 0,
+        /// <summary>
+        /// NIP-28 パブリックチャットチャンネル (Kind 42)
+        /// </summary>
+        Channel = 1,
+        /// <summary>
+        /// BitChat (Kind 20000)
+        /// </summary>
+        BitChat = 2
+    }
+
     public static class Setting
     {
         private static Data _data = new();
@@ -18,6 +36,9 @@ namespace kako
             public Point Location { get; set; }
             public Size Size { get; set; } = new Size(400, 400);
             public int NameColumnWidth { get; set; } = 70;
+
+            public BotMode Mode { get; set; } = BotMode.Note;
+            public string ChannelId { get; set; } = string.Empty;
 
             public bool TopMost { get; set; } = false;
             public double Opacity { get; set; } = 1.00;
@@ -61,6 +82,17 @@ namespace kako
         {
             get => _data.NameColumnWidth;
             set => _data.NameColumnWidth = value;
+        }
+
+        public static BotMode Mode
+        {
+            get => _data.Mode;
+            set => _data.Mode = value;
+        }
+        public static string ChannelId
+        {
+            get => _data.ChannelId;
+            set => _data.ChannelId = value;
         }
 
         public static bool TopMost

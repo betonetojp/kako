@@ -18,19 +18,17 @@ namespace kako
             InitializeComponent();
             LoadApiKey();
             LoadAISettings();
-            // textBoxModelが空の時はデフォルト値を設定
-            if (string.IsNullOrEmpty(textBoxModel.Text))
-            {
-                textBoxModel.Text = "gemini-2.5-flash";
-            }
             // _chatSessionBackUpDataがある時はモデルを作成してIsInitializedをtrueにする
-            if (_chatSessionBackUpData != null)
+            if (_chatSessionBackUpData != null && !string.IsNullOrWhiteSpace(textBoxApiKey.Text) && !string.IsNullOrWhiteSpace(textBoxModel.Text))
             {
                 var apiKey = textBoxApiKey.Text;
                 InitializeModel(apiKey);
-                _chat = _model?.StartChat(_chatSessionBackUpData);
-                IsInitialized = true;
-                checkBoxInitialized.Checked = IsInitialized;
+                if (_model != null)
+                {
+                    _chat = _model.StartChat(_chatSessionBackUpData);
+                    IsInitialized = true;
+                    checkBoxInitialized.Checked = IsInitialized;
+                }
             }
         }
 
@@ -89,11 +87,15 @@ namespace kako
                     _chatSessionBackUpData = null;
                 }
                 InitializeModel(apiKey);
+                if (_model == null)
+                {
+                    return false;
+                }
 
                 var notesContent = MainForm.GetNotesContent();
                 if (!IsInitialized)
                 {
-                    _chat = _model?.StartChat();
+                    _chat = _model.StartChat();
                     IsInitialized = true;
 
                     checkBoxInitialized.Invoke((MethodInvoker)(() => checkBoxInitialized.Checked = IsInitialized));
@@ -161,10 +163,14 @@ namespace kako
             var apiKey = textBoxApiKey.Invoke(() => textBoxApiKey.Text);
 
             InitializeModel(apiKey);
+            if (_model == null)
+            {
+                return false;
+            }
 
             if (!IsInitialized)
             {
-                _chat = _model?.StartChat();
+                _chat = _model.StartChat();
                 IsInitialized = true;
                 checkBoxInitialized.Invoke((MethodInvoker)(() => checkBoxInitialized.Checked = IsInitialized));
             }
@@ -211,7 +217,14 @@ namespace kako
         {
             try
             {
-                _model ??= new GenerativeModel(apiKey, textBoxModel.Text);
+                var modelName = textBoxModel.Invoke(() => textBoxModel.Text.Trim());
+                if (string.IsNullOrWhiteSpace(apiKey) || string.IsNullOrWhiteSpace(modelName))
+                {
+                    _model = null;
+                    return;
+                }
+
+                _model ??= new GenerativeModel(apiKey, modelName);
                 // Use the setting from AI.json (not from UI)
                 var aiSettings = Tools.LoadAISettings();
                 _model.UseGoogleSearch = aiSettings.UseGoogleSearch;
@@ -219,6 +232,7 @@ namespace kako
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
+                _model = null;
                 if (MainForm != null)
                 {
                     MainForm.LastCreatedAt = DateTimeOffset.MinValue;

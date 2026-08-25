@@ -49,6 +49,9 @@ namespace kako
         private bool _minimizeToTray;
         private bool _addClient;
 
+        private BotMode _mode = BotMode.Note;
+        private string _channelId = string.Empty;
+
         private string _director = string.Empty;
         private bool _showOnlyFollowees;
         private bool _usePetname;
@@ -65,6 +68,16 @@ namespace kako
         private bool _appendUserId = true;
 
         private double _tempOpacity = 1.00;
+
+        private string GetAppTitle()
+        {
+            return _mode switch
+            {
+                BotMode.Channel => "kakochannel",
+                BotMode.BitChat => "kakochat",
+                _ => "kako"
+            };
+        }
 
         // 重複イベントIDを保存するリスト
         private readonly LinkedList<string> _displayedEventIds = new();
@@ -154,6 +167,8 @@ namespace kako
             notifyIcon.Visible = _minimizeToTray;
             _addClient = Setting.AddClient;
 
+            _mode = Setting.Mode;
+            _channelId = Setting.ChannelId;
             _director = Setting.Director;
             _showOnlyFollowees = Setting.ShowOnlyFollowees;
             _usePetname = Setting.UsePetname;
@@ -213,7 +228,7 @@ namespace kako
                         break;
                 }
 
-                await NostrAccess.SubscribeAsync();
+                await NostrAccess.SubscribeAsync(_mode, _channelId.ConvertEventIdToHex());
 
                 buttonStart.Enabled = false;
                 buttonStop.Enabled = true;
@@ -230,8 +245,9 @@ namespace kako
                     var directorName = GetName(_director.ConvertToHex());
                     if (!string.IsNullOrEmpty(loginName))
                     {
-                        Text = $"kako - @{loginName} to {directorName}";
-                        notifyIcon.Text = $"kako - @{loginName} to {directorName}";
+                        var appTitle = GetAppTitle();
+                        Text = $"{appTitle} - @{loginName} to {directorName}";
+                        notifyIcon.Text = $"{appTitle} - @{loginName} to {directorName}";
                     }
                 }
 
@@ -931,55 +947,102 @@ namespace kako
             }
             // create tags
             List<NostrEventTag> tags = [];
-            if (rootEvent != null)
+            int eventKind = _mode switch
             {
-                var targetRelayHint = GetBestRelayHint(rootEvent.Id);
-                if (isQuote)
-                {
-                    tags.Add(new NostrEventTag() { TagIdentifier = "q", Data = [rootEvent.Id, targetRelayHint, rootEvent.PublicKey] });
-                }
-                else
-                {
-                    string? rootId = null;
-                    if (rootEvent.Tags != null)
-                    {
-                        foreach (var tag in rootEvent.Tags)
-                        {
-                            if (tag.TagIdentifier == "e" && tag.Data != null && tag.Data.Count > 2 && tag.Data[2] == "root")
-                            {
-                                rootId = tag.Data[0];
-                                break;
-                            }
-                        }
+                BotMode.Channel => 42,
+                BotMode.BitChat => 20000,
+                _ => 1
+            };
 
-                        if (rootId == null)
+            if (_mode == BotMode.Channel)
+            {
+                var channelHex = _channelId.ConvertEventIdToHex();
+                if (!string.IsNullOrEmpty(channelHex))
+                {
+                    var channelRelayHint = GetBestRelayHint(channelHex);
+                    tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [channelHex, channelRelayHint, "root"] });
+                }
+
+                if (rootEvent != null)
+                {
+                    var targetRelayHint = GetBestRelayHint(rootEvent.Id);
+                    tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [rootEvent.Id, targetRelayHint, "reply"] });
+                    tags.Add(new NostrEventTag() { TagIdentifier = "p", Data = [rootEvent.PublicKey] });
+                }
+            }
+            else if (_mode == BotMode.BitChat)
+            {
+                if (rootEvent != null)
+                {
+                    if (isQuote)
+                    {
+                        tags.Add(new NostrEventTag() { TagIdentifier = "q", Data = [rootEvent.Id, string.Empty] });
+                    }
+                    else
+                    {
+                        tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [rootEvent.Id, string.Empty] });
+                        tags.Add(new NostrEventTag() { TagIdentifier = "p", Data = [rootEvent.PublicKey] });
+                    }
+                }
+                if (_addClient)
+                {
+                    tags.Add(new NostrEventTag() { TagIdentifier = "n", Data = ["おもち"] });
+                    tags.Add(new NostrEventTag() { TagIdentifier = "g", Data = ["xn"] });
+                }
+            }
+            else
+            {
+                if (rootEvent != null)
+                {
+                    var targetRelayHint = GetBestRelayHint(rootEvent.Id);
+                    if (isQuote)
+                    {
+                        tags.Add(new NostrEventTag() { TagIdentifier = "q", Data = [rootEvent.Id, targetRelayHint, rootEvent.PublicKey] });
+                    }
+                    else
+                    {
+                        string? rootId = null;
+                        if (rootEvent.Tags != null)
                         {
                             foreach (var tag in rootEvent.Tags)
                             {
-                                if (tag.TagIdentifier == "e" && tag.Data != null && tag.Data.Count > 0 && !string.IsNullOrEmpty(tag.Data[0]))
+                                if (tag.TagIdentifier == "e" && tag.Data != null && tag.Data.Count > 2 && tag.Data[2] == "root")
                                 {
                                     rootId = tag.Data[0];
                                     break;
                                 }
                             }
+
+                            if (rootId == null)
+                            {
+                                foreach (var tag in rootEvent.Tags)
+                                {
+                                    if (tag.TagIdentifier == "e" && tag.Data != null && tag.Data.Count > 0 && !string.IsNullOrEmpty(tag.Data[0]))
+                                    {
+                                        rootId = tag.Data[0];
+                                        break;
+                                    }
+                                }
+                            }
                         }
-                    }
 
-                    if (rootId != null)
-                    {
-                        var rootRelayHint = GetBestRelayHint(rootId);
-                        if (string.IsNullOrEmpty(rootRelayHint)) rootRelayHint = targetRelayHint;
-                        tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [rootId, rootRelayHint, "root"] });
-                        tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [rootEvent.Id, targetRelayHint, "reply"] });
-                    }
-                    else
-                    {
-                        tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [rootEvent.Id, targetRelayHint, "root"] });
-                    }
+                        if (rootId != null)
+                        {
+                            var rootRelayHint = GetBestRelayHint(rootId);
+                            if (string.IsNullOrEmpty(rootRelayHint)) rootRelayHint = targetRelayHint;
+                            tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [rootId, rootRelayHint, "root"] });
+                            tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [rootEvent.Id, targetRelayHint, "reply"] });
+                        }
+                        else
+                        {
+                            tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [rootEvent.Id, targetRelayHint, "root"] });
+                        }
 
-                    tags.Add(new NostrEventTag() { TagIdentifier = "p", Data = [rootEvent.PublicKey] });
+                        tags.Add(new NostrEventTag() { TagIdentifier = "p", Data = [rootEvent.PublicKey] });
+                    }
                 }
             }
+
             if (_addClient)
             {
                 tags.Add(new NostrEventTag()
@@ -991,7 +1054,7 @@ namespace kako
             // create a new event
             var newEvent = new NostrEvent()
             {
-                Kind = 1,
+                Kind = eventKind,
                 Content = content.Replace("\r\n", "\n"),
                 Tags = tags
             };
@@ -1024,6 +1087,28 @@ namespace kako
             }
             // create tags
             List<NostrEventTag> tags = [];
+            int eventKind = _mode switch
+            {
+                BotMode.Channel => 42,
+                BotMode.BitChat => 20000,
+                _ => 1
+            };
+
+            if (_mode == BotMode.Channel)
+            {
+                var channelHex = _channelId.ConvertEventIdToHex();
+                if (!string.IsNullOrEmpty(channelHex))
+                {
+                    var channelRelayHint = GetBestRelayHint(channelHex);
+                    tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [channelHex, channelRelayHint, "root"] });
+                }
+            }
+            else if (_mode == BotMode.BitChat && _addClient)
+            {
+                tags.Add(new NostrEventTag() { TagIdentifier = "n", Data = ["おもち"] });
+                tags.Add(new NostrEventTag() { TagIdentifier = "g", Data = ["xn"] });
+            }
+
             tags.Add(new NostrEventTag() { TagIdentifier = "p", Data = [_director.ConvertToHex()] });
 
             if (_addClient)
@@ -1037,7 +1122,7 @@ namespace kako
             // create a new event
             var newEvent = new NostrEvent()
             {
-                Kind = 1,
+                Kind = eventKind,
                 Content = (_addNostrNpub1 ? "nostr:" + _director + " " : "") + content.Replace("\r\n", "\n"),
                 Tags = tags
             };
@@ -1170,6 +1255,10 @@ namespace kako
             _formSetting.checkBoxMinimizeToTray.Checked = _minimizeToTray;
             _formSetting.checkBoxAddClient.Checked = _addClient;
 
+            _formSetting.comboBoxMode.SelectedIndex = (int)_mode;
+            _formSetting.textBoxChannelId.Text = _channelId;
+            _formSetting.textBoxChannelId.Enabled = (_mode == BotMode.Channel);
+
             _formSetting.textBoxDirector.Text = _director;
             _formSetting.checkBoxShowOnlyFollowees.Checked = _showOnlyFollowees;
             _formSetting.checkBoxUsePetname.Checked = _usePetname;
@@ -1198,6 +1287,9 @@ namespace kako
             notifyIcon.Visible = _minimizeToTray;
             _addClient = _formSetting.checkBoxAddClient.Checked;
 
+            _mode = (BotMode)_formSetting.comboBoxMode.SelectedIndex;
+            _channelId = _formSetting.textBoxChannelId.Text;
+
             _director = _formSetting.textBoxDirector.Text;
             _showOnlyFollowees = _formSetting.checkBoxShowOnlyFollowees.Checked;
             _usePetname = _formSetting.checkBoxUsePetname.Checked;
@@ -1225,8 +1317,9 @@ namespace kako
                 // 別アカウントログイン失敗に備えてクリアしておく
                 _npubHex = string.Empty;
                 _followeesHexs.Clear();
-                Text = "kako";
-                notifyIcon.Text = "kako";
+                var appTitle = GetAppTitle();
+                Text = appTitle;
+                notifyIcon.Text = appTitle;
 
                 // 秘密鍵と公開鍵取得
                 _npubHex = _nsec.GetNpubHex();
@@ -1259,8 +1352,8 @@ namespace kako
                     var directorName = GetName(_director.ConvertToHex());
                     if (!string.IsNullOrEmpty(loginName))
                     {
-                        Text = $"kako - @{loginName} to {directorName}";
-                        notifyIcon.Text = $"kako - @{loginName} to {directorName}";
+                        Text = $"{appTitle} - @{loginName} to {directorName}";
+                        notifyIcon.Text = $"{appTitle} - @{loginName} to {directorName}";
                     }
                 }
             }
@@ -1278,6 +1371,8 @@ namespace kako
             Setting.MinimizeToTray = _minimizeToTray;
             Setting.AddClient = _addClient;
 
+            Setting.Mode = _mode;
+            Setting.ChannelId = _channelId;
             Setting.Director = _director;
             Setting.ShowOnlyFollowees = _showOnlyFollowees;
             Setting.UsePetname = _usePetname;
@@ -1863,7 +1958,7 @@ namespace kako
 
                 await NostrAccess.Clients.Disconnect();
                 await NostrAccess.ConnectAsync();
-                await NostrAccess.SubscribeAsync();
+                await NostrAccess.SubscribeAsync(_mode, _channelId.ConvertEventIdToHex());
 
                 // ログイン済みの時
                 if (!string.IsNullOrEmpty(_npubHex))

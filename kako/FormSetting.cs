@@ -1,4 +1,4 @@
-﻿using kako.Properties;
+using kako.Properties;
 using System.Diagnostics;
 
 namespace kako
@@ -21,11 +21,19 @@ namespace kako
             {
                 buttonLogOut.Image = new Bitmap(Resources.icons8_log_out_32, size, size);
             }
+            // モード選択アイテムを追加
+            comboBoxMode.Items.AddRange(["Note (Kind 1)", "Channel (Kind 42)", "BitChat (Kind 20000)"]);
         }
 
         private void FormSetting_Load(object sender, EventArgs e)
         {
             labelOpacity.Text = $"{trackBarOpacity.Value}%";
+            textBoxChannelId.Enabled = (comboBoxMode.SelectedIndex == (int)BotMode.Channel);
+        }
+
+        private void ComboBoxMode_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            textBoxChannelId.Enabled = (comboBoxMode.SelectedIndex == (int)BotMode.Channel);
         }
 
         private void FormSetting_Shown(object sender, EventArgs e)

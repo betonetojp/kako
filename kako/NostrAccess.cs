@@ -157,21 +157,42 @@ namespace kako
         /// <summary>
         /// タイムライン購読処理
         /// </summary>
-        public static async Task SubscribeAsync()
+        /// <param name="mode">動作モード</param>
+        /// <param name="channelHex">対象チャンネルID(hex)（Channelモード時）</param>
+        public static async Task SubscribeAsync(BotMode mode = BotMode.Note, string? channelHex = null)
         {
             if (_clients == null)
             {
                 return;
             }
 
+            var filter = new NostrSubscriptionFilter
+            {
+                Since = DateTimeOffset.Now - _timeSpan,
+            };
+
+            switch (mode)
+            {
+                case BotMode.Channel:
+                    filter.Kinds = [42];
+                    if (!string.IsNullOrEmpty(channelHex))
+                    {
+                        filter.ReferencedEventIds = [channelHex];
+                    }
+                    break;
+                case BotMode.BitChat:
+                    filter.Kinds = [20000];
+                    break;
+                case BotMode.Note:
+                default:
+                    filter.Kinds = [1];
+                    break;
+            }
+
             await _clients.CreateSubscription(
                 _subscriptionId,
                 [
-                        new NostrSubscriptionFilter
-                        {
-                            Kinds = [1],
-                            Since = DateTimeOffset.Now - _timeSpan,
-                        }
+                    filter
                 ]
             );
         }

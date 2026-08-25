@@ -1,4 +1,4 @@
-﻿namespace kako
+namespace kako
 {
     partial class FormAI
     {
@@ -209,6 +209,7 @@
             textBoxModel.BorderStyle = BorderStyle.FixedSingle;
             textBoxModel.Location = new Point(240, 34);
             textBoxModel.Name = "textBoxModel";
+            textBoxModel.PlaceholderText = "gemini-3.1-flash-lite";
             textBoxModel.Size = new Size(142, 23);
             textBoxModel.TabIndex = 3;
             // 

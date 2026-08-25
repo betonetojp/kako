@@ -46,6 +46,10 @@ namespace kako
             textBoxNpub = new TextBox();
             buttonLogOut = new Button();
             toolTipLogOut = new ToolTip(components);
+            comboBoxMode = new ComboBox();
+            labelMode = new Label();
+            textBoxChannelId = new TextBox();
+            labelChannelId = new Label();
             textBoxDirector = new TextBox();
             label5 = new Label();
             label6 = new Label();
@@ -75,13 +79,13 @@ namespace kako
             textBoxNsec.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             textBoxNsec.BorderStyle = BorderStyle.FixedSingle;
             textBoxNsec.ImeMode = ImeMode.Disable;
-            textBoxNsec.Location = new Point(115, 308);
+            textBoxNsec.Location = new Point(115, 366);
             textBoxNsec.MaxLength = 256;
             textBoxNsec.Name = "textBoxNsec";
             textBoxNsec.PasswordChar = '*';
             textBoxNsec.PlaceholderText = "nsec1...";
             textBoxNsec.Size = new Size(268, 23);
-            textBoxNsec.TabIndex = 18;
+            textBoxNsec.TabIndex = 20;
             textBoxNsec.Leave += TextBoxNsec_Leave;
             // 
             // trackBarOpacity
@@ -133,7 +137,7 @@ namespace kako
             label4.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             label4.AutoSize = true;
             label4.ForeColor = SystemColors.GrayText;
-            label4.Location = new Point(199, 377);
+            label4.Location = new Point(199, 435);
             label4.Name = "label4";
             label4.Size = new Size(126, 15);
             label4.TabIndex = 0;
@@ -143,10 +147,10 @@ namespace kako
             // 
             linkLabelIcons8.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             linkLabelIcons8.AutoSize = true;
-            linkLabelIcons8.Location = new Point(331, 377);
+            linkLabelIcons8.Location = new Point(331, 435);
             linkLabelIcons8.Name = "linkLabelIcons8";
             linkLabelIcons8.Size = new Size(41, 15);
-            linkLabelIcons8.TabIndex = 22;
+            linkLabelIcons8.TabIndex = 24;
             linkLabelIcons8.TabStop = true;
             linkLabelIcons8.Text = "Icons8";
             linkLabelIcons8.LinkClicked += LinkLabelIcons8_LinkClicked;
@@ -160,20 +164,58 @@ namespace kako
             labelOpacity.Text = "100%";
             labelOpacity.TextAlign = ContentAlignment.TopRight;
             // 
+            // labelMode
+            // 
+            labelMode.AutoSize = true;
+            labelMode.Location = new Point(73, 90);
+            labelMode.Name = "labelMode";
+            labelMode.Size = new Size(38, 15);
+            labelMode.TabIndex = 0;
+            labelMode.Text = "Mode";
+            // 
+            // comboBoxMode
+            // 
+            comboBoxMode.DropDownStyle = ComboBoxStyle.DropDownList;
+            comboBoxMode.FormattingEnabled = true;
+            comboBoxMode.Location = new Point(115, 87);
+            comboBoxMode.Name = "comboBoxMode";
+            comboBoxMode.Size = new Size(160, 23);
+            comboBoxMode.TabIndex = 5;
+            comboBoxMode.SelectedIndexChanged += ComboBoxMode_SelectedIndexChanged;
+            // 
+            // labelChannelId
+            // 
+            labelChannelId.AutoSize = true;
+            labelChannelId.Location = new Point(41, 119);
+            labelChannelId.Name = "labelChannelId";
+            labelChannelId.Size = new Size(68, 15);
+            labelChannelId.TabIndex = 0;
+            labelChannelId.Text = "Channel ID";
+            // 
+            // textBoxChannelId
+            // 
+            textBoxChannelId.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            textBoxChannelId.BorderStyle = BorderStyle.FixedSingle;
+            textBoxChannelId.Location = new Point(115, 116);
+            textBoxChannelId.Name = "textBoxChannelId";
+            textBoxChannelId.PlaceholderText = "note1..., nevent1..., or hex";
+            textBoxChannelId.Size = new Size(297, 23);
+            textBoxChannelId.TabIndex = 6;
+            // 
             // checkBoxShowOnlyFollowees
             // 
             checkBoxShowOnlyFollowees.AutoSize = true;
-            checkBoxShowOnlyFollowees.Location = new Point(12, 116);
+            checkBoxShowOnlyFollowees.Location = new Point(12, 174);
             checkBoxShowOnlyFollowees.Name = "checkBoxShowOnlyFollowees";
             checkBoxShowOnlyFollowees.Size = new Size(134, 19);
-            checkBoxShowOnlyFollowees.TabIndex = 6;
+            checkBoxShowOnlyFollowees.TabIndex = 8;
             checkBoxShowOnlyFollowees.Text = "Show only followees";
             checkBoxShowOnlyFollowees.UseVisualStyleBackColor = true;
             // 
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(45, 310);
+            label3.Location = new Point(45, 368);
             label3.Name = "label3";
             label3.Size = new Size(64, 15);
             label3.TabIndex = 0;
@@ -183,10 +225,10 @@ namespace kako
             // 
             linkLabelVersion.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             linkLabelVersion.AutoSize = true;
-            linkLabelVersion.Location = new Point(12, 377);
+            linkLabelVersion.Location = new Point(12, 435);
             linkLabelVersion.Name = "linkLabelVersion";
             linkLabelVersion.Size = new Size(37, 15);
-            linkLabelVersion.TabIndex = 21;
+            linkLabelVersion.TabIndex = 23;
             linkLabelVersion.TabStop = true;
             linkLabelVersion.Text = "v0.4.4";
             linkLabelVersion.LinkClicked += LinkLabelVersion_LinkClicked;
@@ -204,31 +246,31 @@ namespace kako
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(48, 339);
+            label2.Location = new Point(48, 397);
             label2.Name = "label2";
             label2.Size = new Size(61, 15);
-            label2.TabIndex = 15;
+            label2.TabIndex = 0;
             label2.Text = "Public key";
             // 
             // textBoxNpub
             // 
             textBoxNpub.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             textBoxNpub.BorderStyle = BorderStyle.FixedSingle;
-            textBoxNpub.Location = new Point(115, 337);
+            textBoxNpub.Location = new Point(115, 395);
             textBoxNpub.Name = "textBoxNpub";
             textBoxNpub.PlaceholderText = "npub1...";
             textBoxNpub.ReadOnly = true;
             textBoxNpub.Size = new Size(297, 23);
-            textBoxNpub.TabIndex = 20;
+            textBoxNpub.TabIndex = 22;
             // 
             // buttonLogOut
             // 
             buttonLogOut.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             buttonLogOut.Image = Properties.Resources.icons8_log_out_16;
-            buttonLogOut.Location = new Point(389, 308);
+            buttonLogOut.Location = new Point(389, 366);
             buttonLogOut.Name = "buttonLogOut";
             buttonLogOut.Size = new Size(23, 23);
-            buttonLogOut.TabIndex = 19;
+            buttonLogOut.TabIndex = 21;
             toolTipLogOut.SetToolTip(buttonLogOut, "Log out");
             buttonLogOut.UseVisualStyleBackColor = true;
             buttonLogOut.Click += ButtonLogOut_Click;
@@ -237,25 +279,25 @@ namespace kako
             // 
             textBoxDirector.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             textBoxDirector.BorderStyle = BorderStyle.FixedSingle;
-            textBoxDirector.Location = new Point(115, 87);
+            textBoxDirector.Location = new Point(115, 145);
             textBoxDirector.Name = "textBoxDirector";
             textBoxDirector.PlaceholderText = "npub1...";
             textBoxDirector.Size = new Size(297, 23);
-            textBoxDirector.TabIndex = 5;
+            textBoxDirector.TabIndex = 7;
             // 
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new Point(21, 89);
+            label5.Location = new Point(21, 148);
             label5.Name = "label5";
             label5.Size = new Size(88, 15);
-            label5.TabIndex = 29;
+            label5.TabIndex = 0;
             label5.Text = "Director's npub";
             // 
             // label6
             // 
             label6.AutoSize = true;
-            label6.Location = new Point(12, 200);
+            label6.Location = new Point(12, 258);
             label6.Name = "label6";
             label6.Size = new Size(97, 15);
             label6.TabIndex = 0;
@@ -264,17 +306,17 @@ namespace kako
             // textBoxForceCommands
             // 
             textBoxForceCommands.BorderStyle = BorderStyle.FixedSingle;
-            textBoxForceCommands.Location = new Point(115, 198);
+            textBoxForceCommands.Location = new Point(115, 256);
             textBoxForceCommands.Multiline = true;
             textBoxForceCommands.Name = "textBoxForceCommands";
             textBoxForceCommands.ScrollBars = ScrollBars.Vertical;
             textBoxForceCommands.Size = new Size(149, 49);
-            textBoxForceCommands.TabIndex = 14;
+            textBoxForceCommands.TabIndex = 16;
             // 
             // label7
             // 
             label7.AutoSize = true;
-            label7.Location = new Point(224, 143);
+            label7.Location = new Point(224, 201);
             label7.Name = "label7";
             label7.Size = new Size(49, 15);
             label7.TabIndex = 0;
@@ -283,26 +325,26 @@ namespace kako
             // checkBoxSummarizeEveryHour
             // 
             checkBoxSummarizeEveryHour.AutoSize = true;
-            checkBoxSummarizeEveryHour.Location = new Point(12, 142);
+            checkBoxSummarizeEveryHour.Location = new Point(12, 200);
             checkBoxSummarizeEveryHour.Name = "checkBoxSummarizeEveryHour";
             checkBoxSummarizeEveryHour.Size = new Size(155, 19);
-            checkBoxSummarizeEveryHour.TabIndex = 8;
+            checkBoxSummarizeEveryHour.TabIndex = 10;
             checkBoxSummarizeEveryHour.Text = "Summarize every hour at";
             checkBoxSummarizeEveryHour.UseVisualStyleBackColor = true;
             // 
             // numericUpDownSummarizeMinutes
             // 
-            numericUpDownSummarizeMinutes.Location = new Point(173, 141);
+            numericUpDownSummarizeMinutes.Location = new Point(173, 199);
             numericUpDownSummarizeMinutes.Maximum = new decimal(new int[] { 59, 0, 0, 0 });
             numericUpDownSummarizeMinutes.Name = "numericUpDownSummarizeMinutes";
             numericUpDownSummarizeMinutes.Size = new Size(45, 23);
-            numericUpDownSummarizeMinutes.TabIndex = 9;
+            numericUpDownSummarizeMinutes.TabIndex = 11;
             numericUpDownSummarizeMinutes.TextAlign = HorizontalAlignment.Center;
             // 
             // label8
             // 
             label8.AutoSize = true;
-            label8.Location = new Point(22, 255);
+            label8.Location = new Point(22, 313);
             label8.Name = "label8";
             label8.Size = new Size(87, 15);
             label8.TabIndex = 0;
@@ -311,37 +353,37 @@ namespace kako
             // textBoxCallCommands
             // 
             textBoxCallCommands.BorderStyle = BorderStyle.FixedSingle;
-            textBoxCallCommands.Location = new Point(115, 253);
+            textBoxCallCommands.Location = new Point(115, 311);
             textBoxCallCommands.Multiline = true;
             textBoxCallCommands.Name = "textBoxCallCommands";
             textBoxCallCommands.ScrollBars = ScrollBars.Vertical;
             textBoxCallCommands.Size = new Size(149, 49);
-            textBoxCallCommands.TabIndex = 15;
+            textBoxCallCommands.TabIndex = 17;
             // 
             // checkBoxOpenMode
             // 
             checkBoxOpenMode.AutoSize = true;
-            checkBoxOpenMode.Location = new Point(270, 254);
+            checkBoxOpenMode.Location = new Point(270, 312);
             checkBoxOpenMode.Name = "checkBoxOpenMode";
             checkBoxOpenMode.Size = new Size(88, 19);
-            checkBoxOpenMode.TabIndex = 16;
+            checkBoxOpenMode.TabIndex = 18;
             checkBoxOpenMode.Text = "Open mode";
             checkBoxOpenMode.UseVisualStyleBackColor = true;
             // 
             // numericUpDownCallReplyLimit
             // 
-            numericUpDownCallReplyLimit.Location = new Point(325, 279);
+            numericUpDownCallReplyLimit.Location = new Point(325, 337);
             numericUpDownCallReplyLimit.Maximum = new decimal(new int[] { 99, 0, 0, 0 });
             numericUpDownCallReplyLimit.Name = "numericUpDownCallReplyLimit";
             numericUpDownCallReplyLimit.Size = new Size(47, 23);
-            numericUpDownCallReplyLimit.TabIndex = 17;
+            numericUpDownCallReplyLimit.TabIndex = 19;
             numericUpDownCallReplyLimit.TextAlign = HorizontalAlignment.Center;
             numericUpDownCallReplyLimit.Value = new decimal(new int[] { 10, 0, 0, 0 });
             // 
             // label9
             // 
             label9.AutoSize = true;
-            label9.Location = new Point(270, 281);
+            label9.Location = new Point(270, 339);
             label9.Name = "label9";
             label9.Size = new Size(49, 15);
             label9.TabIndex = 0;
@@ -350,10 +392,10 @@ namespace kako
             // checkBoxMentionMode
             // 
             checkBoxMentionMode.AutoSize = true;
-            checkBoxMentionMode.Location = new Point(279, 142);
+            checkBoxMentionMode.Location = new Point(279, 200);
             checkBoxMentionMode.Name = "checkBoxMentionMode";
             checkBoxMentionMode.Size = new Size(71, 19);
-            checkBoxMentionMode.TabIndex = 10;
+            checkBoxMentionMode.TabIndex = 12;
             checkBoxMentionMode.Text = "Mention";
             checkBoxMentionMode.UseVisualStyleBackColor = true;
             // 
@@ -362,17 +404,17 @@ namespace kako
             checkBoxUsePetname.AutoSize = true;
             checkBoxUsePetname.Checked = true;
             checkBoxUsePetname.CheckState = CheckState.Checked;
-            checkBoxUsePetname.Location = new Point(152, 116);
+            checkBoxUsePetname.Location = new Point(152, 174);
             checkBoxUsePetname.Name = "checkBoxUsePetname";
             checkBoxUsePetname.Size = new Size(94, 19);
-            checkBoxUsePetname.TabIndex = 7;
+            checkBoxUsePetname.TabIndex = 9;
             checkBoxUsePetname.Text = "Use petname";
             checkBoxUsePetname.UseVisualStyleBackColor = true;
             // 
             // label10
             // 
             label10.AutoSize = true;
-            label10.Location = new Point(224, 172);
+            label10.Location = new Point(224, 230);
             label10.Name = "label10";
             label10.Size = new Size(41, 15);
             label10.TabIndex = 0;
@@ -381,31 +423,31 @@ namespace kako
             // checkBoxSummarizeByEventCount
             // 
             checkBoxSummarizeByEventCount.AutoSize = true;
-            checkBoxSummarizeByEventCount.Location = new Point(12, 171);
+            checkBoxSummarizeByEventCount.Location = new Point(12, 229);
             checkBoxSummarizeByEventCount.Name = "checkBoxSummarizeByEventCount";
             checkBoxSummarizeByEventCount.Size = new Size(114, 19);
-            checkBoxSummarizeByEventCount.TabIndex = 11;
+            checkBoxSummarizeByEventCount.TabIndex = 13;
             checkBoxSummarizeByEventCount.Text = "Summarize every";
             checkBoxSummarizeByEventCount.UseVisualStyleBackColor = true;
             // 
             // numericUpDownEventThreshold
             // 
-            numericUpDownEventThreshold.Location = new Point(132, 170);
+            numericUpDownEventThreshold.Location = new Point(132, 228);
             numericUpDownEventThreshold.Maximum = new decimal(new int[] { 9999, 0, 0, 0 });
             numericUpDownEventThreshold.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             numericUpDownEventThreshold.Name = "numericUpDownEventThreshold";
             numericUpDownEventThreshold.Size = new Size(86, 23);
-            numericUpDownEventThreshold.TabIndex = 12;
+            numericUpDownEventThreshold.TabIndex = 14;
             numericUpDownEventThreshold.TextAlign = HorizontalAlignment.Center;
             numericUpDownEventThreshold.Value = new decimal(new int[] { 9999, 0, 0, 0 });
             // 
             // checkBoxAddNostrNpub1
             // 
             checkBoxAddNostrNpub1.AutoSize = true;
-            checkBoxAddNostrNpub1.Location = new Point(279, 171);
+            checkBoxAddNostrNpub1.Location = new Point(279, 229);
             checkBoxAddNostrNpub1.Name = "checkBoxAddNostrNpub1";
             checkBoxAddNostrNpub1.Size = new Size(124, 19);
-            checkBoxAddNostrNpub1.TabIndex = 13;
+            checkBoxAddNostrNpub1.TabIndex = 15;
             checkBoxAddNostrNpub1.Text = "Add nostr:npub1...";
             checkBoxAddNostrNpub1.UseVisualStyleBackColor = true;
             // 
@@ -413,7 +455,11 @@ namespace kako
             // 
             AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
-            ClientSize = new Size(424, 401);
+            ClientSize = new Size(424, 460);
+            Controls.Add(textBoxChannelId);
+            Controls.Add(labelChannelId);
+            Controls.Add(comboBoxMode);
+            Controls.Add(labelMode);
             Controls.Add(checkBoxAddNostrNpub1);
             Controls.Add(checkBoxUsePetname);
             Controls.Add(checkBoxMentionMode);
@@ -451,7 +497,7 @@ namespace kako
             KeyPreview = true;
             MaximizeBox = false;
             MinimizeBox = false;
-            MinimumSize = new Size(440, 440);
+            MinimumSize = new Size(440, 500);
             Name = "FormSetting";
             ShowInTaskbar = false;
             SizeGripStyle = SizeGripStyle.Show;
@@ -478,6 +524,10 @@ namespace kako
         private Label label4;
         private LinkLabel linkLabelIcons8;
         private Label labelOpacity;
+        internal ComboBox comboBoxMode;
+        private Label labelMode;
+        internal TextBox textBoxChannelId;
+        private Label labelChannelId;
         internal CheckBox checkBoxShowOnlyFollowees;
         private Label label3;
         private LinkLabel linkLabelVersion;
