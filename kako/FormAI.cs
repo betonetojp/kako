@@ -16,18 +16,34 @@ namespace kako
         public FormAI()
         {
             InitializeComponent();
+            InitializeSession();
+        }
+
+        internal void InitializeSession()
+        {
             LoadApiKey();
             LoadAISettings();
+
+            var apiKey = textBoxApiKey.Text;
+            var modelName = textBoxModel.Text.Trim();
+
             // _chatSessionBackUpDataがある時はモデルを作成してIsInitializedをtrueにする
-            if (_chatSessionBackUpData != null && !string.IsNullOrWhiteSpace(textBoxApiKey.Text) && !string.IsNullOrWhiteSpace(textBoxModel.Text))
+            if (_chatSessionBackUpData?.History != null && _chatSessionBackUpData.History.Count > 0 &&
+                !string.IsNullOrWhiteSpace(apiKey) && !string.IsNullOrWhiteSpace(modelName))
             {
-                var apiKey = textBoxApiKey.Text;
                 InitializeModel(apiKey);
                 if (_model != null)
                 {
-                    _chat = _model.StartChat(_chatSessionBackUpData);
-                    IsInitialized = true;
-                    checkBoxInitialized.Checked = IsInitialized;
+                    try
+                    {
+                        _chat = _model.StartChat(_chatSessionBackUpData);
+                        IsInitialized = true;
+                        checkBoxInitialized.Checked = IsInitialized;
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"チャットセッション復元失敗: {ex.Message}");
+                    }
                 }
             }
         }
@@ -120,6 +136,17 @@ namespace kako
                         }
                     }
                 }
+                else if (_chat == null)
+                {
+                    if (_chatSessionBackUpData != null)
+                    {
+                        _chat = _model.StartChat(_chatSessionBackUpData);
+                    }
+                    else
+                    {
+                        _chat = _model.StartChat();
+                    }
+                }
 
                 notesContent = textBoxPromptForEveryMessage.Invoke(() => textBoxPromptForEveryMessage.Text)
                              + notesContent;
@@ -173,6 +200,17 @@ namespace kako
                 _chat = _model.StartChat();
                 IsInitialized = true;
                 checkBoxInitialized.Invoke((MethodInvoker)(() => checkBoxInitialized.Checked = IsInitialized));
+            }
+            else if (_chat == null)
+            {
+                if (_chatSessionBackUpData != null)
+                {
+                    _chat = _model.StartChat(_chatSessionBackUpData);
+                }
+                else
+                {
+                    _chat = _model.StartChat();
+                }
             }
 
             bool success = false;
@@ -310,7 +348,7 @@ namespace kako
             }
         }
 
-        private void SaveAISettings()
+        internal void SaveAISettings()
         {
             try
             {
@@ -330,6 +368,11 @@ namespace kako
                 };
                 Tools.SaveAISettings(settings);
 
+                var apiKey = textBoxApiKey.Text;
+                if (!string.IsNullOrWhiteSpace(apiKey))
+                {
+                    SaveApiKey(apiKey);
+                }
 
                 // チャットセッションのバックアップデータがある場合は保存
                 if (_chat != null)

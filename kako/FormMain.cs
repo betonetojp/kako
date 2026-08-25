@@ -404,9 +404,38 @@ namespace kako
                             headMark = "*";
                         }
 
-                        #region テキストノート
-                        if (1 == nostrEvent.Kind)
+                        #region モード別タイムラインイベント処理
+                        int targetKind = _mode switch
                         {
+                            BotMode.Channel => 42,
+                            BotMode.BitChat => 20000,
+                            _ => 1
+                        };
+
+                        if (nostrEvent.Kind == targetKind)
+                        {
+                            if (_mode == BotMode.Channel)
+                            {
+                                var targetChannelHex = _channelId.ConvertEventIdToHex();
+                                if (!string.IsNullOrEmpty(targetChannelHex))
+                                {
+                                    var eTags = nostrEvent.GetTaggedData("e");
+                                    if (eTags == null || !eTags.Contains(targetChannelHex, StringComparer.OrdinalIgnoreCase))
+                                    {
+                                        continue;
+                                    }
+                                }
+                            }
+                            else if (_mode == BotMode.BitChat)
+                            {
+                                var targetGeohash = string.IsNullOrWhiteSpace(_geohash) ? "xn" : _geohash;
+                                var g = nostrEvent.GetTaggedData("g");
+                                if (g == null || g.Length == 0 || g[0] != targetGeohash)
+                                {
+                                    continue;
+                                }
+                            }
+
                             string editedContent = content;
 
                             // nostr:npub1またはnostr:nprofile1が含まれている場合、@ユーザー名を取得
@@ -565,8 +594,9 @@ namespace kako
 
                                 if (_openMode || nostrEvent.PublicKey == whoToNotify)
                                 {
-                                    // 呼出コマンド
-                                    if (_callCommands.Contains(content))
+                                    // 呼出コマンド（前方一致判定）
+                                    var matchedCmd = _callCommands.FirstOrDefault(cmd => content.StartsWith(cmd));
+                                    if (matchedCmd != null)
                                     {
                                         if (_alreadyPostedBreakMessage)
                                         {
@@ -575,7 +605,7 @@ namespace kako
                                         else
                                         {
                                             var authorWithId = GetAuthorNameWithId(nostrEvent.PublicKey);
-                                            bool success = await _formAI.SendMessageAsync(authorWithId + "さんが呼んでいます。返事をしてください。");
+                                            bool success = await _formAI.SendMessageAsync(authorWithId + "さんからの返信：\r\n" + content);
                                             if (success)
                                             {
                                                 // 1秒待つ
@@ -597,7 +627,11 @@ namespace kako
                                                         var breakAnswer = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n');
                                                         if (!string.IsNullOrWhiteSpace(breakAnswer))
                                                         {
-                                                            if (_openMode)
+                                                            if (_mode == BotMode.Channel)
+                                                            {
+                                                                await PostAsync(breakAnswer, nostrEvent);
+                                                            }
+                                                            else if (_openMode)
                                                             {
                                                                 await PostAsync(breakAnswer);
                                                             }
@@ -612,6 +646,7 @@ namespace kako
                                                 }
                                             }
                                         }
+                                        continue;
                                     }
                                     else
                                     {
@@ -654,7 +689,11 @@ namespace kako
                                                                 var breakAnswer = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n');
                                                                 if (!string.IsNullOrWhiteSpace(breakAnswer))
                                                                 {
-                                                                    if (_openMode)
+                                                                    if (_mode == BotMode.Channel)
+                                                                    {
+                                                                        await PostAsync(breakAnswer, nostrEvent);
+                                                                    }
+                                                                    else if (_openMode)
                                                                     {
                                                                         await PostAsync(breakAnswer);
                                                                     }
@@ -685,10 +724,21 @@ namespace kako
                             FetchProfileIfNeeded(nostrEvent.PublicKey);
 
                             // ユーザー表示名取得
-                            userName = GetUserName(nostrEvent.PublicKey);
-                            if (userName == "???" && nostrEvent.PublicKey.Length >= 8)
+                            if (_mode == BotMode.BitChat)
                             {
-                                userName = nostrEvent.PublicKey[..8];
+                                var n = nostrEvent.GetTaggedData("n");
+                                if (n != null && 0 < n.Length && !string.IsNullOrEmpty(n[0]))
+                                {
+                                    userName = n[0];
+                                }
+                            }
+                            if (string.IsNullOrEmpty(userName))
+                            {
+                                userName = GetUserName(nostrEvent.PublicKey);
+                                if (userName == "???" && nostrEvent.PublicKey.Length >= 8)
+                                {
+                                    userName = nostrEvent.PublicKey[..8];
+                                }
                             }
 
                             bool isReply = false;
@@ -988,13 +1038,10 @@ namespace kako
                         tags.Add(new NostrEventTag() { TagIdentifier = "p", Data = [rootEvent.PublicKey] });
                     }
                 }
-                if (_addClient)
-                {
-                    var botName = string.IsNullOrWhiteSpace(_botName) ? "まとめbot" : _botName;
-                    var geohash = string.IsNullOrWhiteSpace(_geohash) ? "xn" : _geohash;
-                    tags.Add(new NostrEventTag() { TagIdentifier = "n", Data = [botName] });
-                    tags.Add(new NostrEventTag() { TagIdentifier = "g", Data = [geohash] });
-                }
+                var botName = string.IsNullOrWhiteSpace(_botName) ? "まとめbot" : _botName;
+                var geohash = string.IsNullOrWhiteSpace(_geohash) ? "xn" : _geohash;
+                tags.Add(new NostrEventTag() { TagIdentifier = "n", Data = [botName] });
+                tags.Add(new NostrEventTag() { TagIdentifier = "g", Data = [geohash] });
             }
             else
             {
@@ -1109,7 +1156,7 @@ namespace kako
                     tags.Add(new NostrEventTag() { TagIdentifier = "e", Data = [channelHex, channelRelayHint, "root"] });
                 }
             }
-            else if (_mode == BotMode.BitChat && _addClient)
+            else if (_mode == BotMode.BitChat)
             {
                 var botName = string.IsNullOrWhiteSpace(_botName) ? "まとめbot" : _botName;
                 var geohash = string.IsNullOrWhiteSpace(_geohash) ? "xn" : _geohash;
@@ -1257,6 +1304,9 @@ namespace kako
         private async void ButtonSetting_Click(object sender, EventArgs e)
         {
             // 開く前
+            var oldMode = _mode;
+            var oldChannelId = _channelId;
+
             _formSetting.checkBoxTopMost.Checked = TopMost;
             Opacity = _tempOpacity;
             _formSetting.trackBarOpacity.Value = (int)(Opacity * 100);
@@ -1296,10 +1346,29 @@ namespace kako
             notifyIcon.Visible = _minimizeToTray;
             _addClient = _formSetting.checkBoxAddClient.Checked;
 
-            _mode = (BotMode)_formSetting.comboBoxMode.SelectedIndex;
-            _channelId = _formSetting.textBoxChannelId.Text;
+            var newMode = (BotMode)_formSetting.comboBoxMode.SelectedIndex;
+            var newChannelId = _formSetting.textBoxChannelId.Text;
+            bool modeChanged = (oldMode != newMode) || (newMode == BotMode.Channel && oldChannelId != newChannelId);
+
+            _mode = newMode;
+            _channelId = newChannelId;
             _geohash = _formSetting.textBoxGeohash.Text;
             _botName = _formSetting.textBoxBotName.Text;
+
+            if (modeChanged)
+            {
+                dataGridViewNotes.Rows.Clear();
+                _displayedEventIds.Clear();
+                LastCreatedAt = DateTimeOffset.MinValue;
+                LatestCreatedAt = DateTimeOffset.MinValue;
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+
+                if (NostrAccess.Clients != null)
+                {
+                    await NostrAccess.SubscribeAsync(_mode, _channelId.ConvertEventIdToHex());
+                }
+            }
 
             _director = _formSetting.textBoxDirector.Text;
             _showOnlyFollowees = _formSetting.checkBoxShowOnlyFollowees.Checked;
@@ -1557,6 +1626,9 @@ namespace kako
                 // ホットキーの登録を解除
                 UnregisterHotKey(this.Handle, HOTKEY_ID);
 
+                // AI設定・チャット履歴の保存
+                _formAI?.SaveAISettings();
+
                 NostrAccess.CloseSubscriptions();
                 NostrAccess.DisconnectAndDispose();
 
@@ -1604,6 +1676,8 @@ namespace kako
                 {
                     _formSetting.textBoxNsec.Enabled = false;
                 }
+
+                _formAI.InitializeSession();
 
                 ButtonStart_Click(sender, e);
             }

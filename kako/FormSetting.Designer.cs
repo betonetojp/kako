@@ -598,7 +598,6 @@ namespace kako
         private Label label7;
         internal CheckBox checkBoxSummarizeEveryHour;
         internal NumericUpDown numericUpDownSummarizeMinutes;
-        private NumericUpDown numericUpDown1;
         private Label label8;
         internal TextBox textBoxCallCommands;
         internal CheckBox checkBoxOpenMode;
