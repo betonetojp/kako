@@ -185,10 +185,10 @@ namespace kako
             linkLabelVersion.AutoSize = true;
             linkLabelVersion.Location = new Point(12, 377);
             linkLabelVersion.Name = "linkLabelVersion";
-            linkLabelVersion.Size = new Size(37, 15);
+            linkLabelVersion.Size = new Size(78, 15);
             linkLabelVersion.TabIndex = 21;
             linkLabelVersion.TabStop = true;
-            linkLabelVersion.Text = "v0.4.2channel";
+            linkLabelVersion.Text = "v0.4.4channel";
             linkLabelVersion.LinkClicked += LinkLabelVersion_LinkClicked;
             // 
             // checkBoxMinimizeToTray
