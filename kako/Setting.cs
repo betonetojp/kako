@@ -39,6 +39,8 @@ namespace kako
 
             public BotMode Mode { get; set; } = BotMode.Note;
             public string ChannelId { get; set; } = string.Empty;
+            public string BotName { get; set; } = "おもち";
+            public string Geohash { get; set; } = "xn";
 
             public bool TopMost { get; set; } = false;
             public double Opacity { get; set; } = 1.00;
@@ -93,6 +95,16 @@ namespace kako
         {
             get => _data.ChannelId;
             set => _data.ChannelId = value;
+        }
+        public static string BotName
+        {
+            get => _data.BotName;
+            set => _data.BotName = value;
+        }
+        public static string Geohash
+        {
+            get => _data.Geohash;
+            set => _data.Geohash = value;
         }
 
         public static bool TopMost

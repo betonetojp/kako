@@ -51,6 +51,8 @@ namespace kako
 
         private BotMode _mode = BotMode.Note;
         private string _channelId = string.Empty;
+        private string _botName = "おもち";
+        private string _geohash = "xn";
 
         private string _director = string.Empty;
         private bool _showOnlyFollowees;
@@ -169,6 +171,8 @@ namespace kako
 
             _mode = Setting.Mode;
             _channelId = Setting.ChannelId;
+            _botName = Setting.BotName;
+            _geohash = Setting.Geohash;
             _director = Setting.Director;
             _showOnlyFollowees = Setting.ShowOnlyFollowees;
             _usePetname = Setting.UsePetname;
@@ -986,8 +990,10 @@ namespace kako
                 }
                 if (_addClient)
                 {
-                    tags.Add(new NostrEventTag() { TagIdentifier = "n", Data = ["おもち"] });
-                    tags.Add(new NostrEventTag() { TagIdentifier = "g", Data = ["xn"] });
+                    var botName = string.IsNullOrWhiteSpace(_botName) ? "おもち" : _botName;
+                    var geohash = string.IsNullOrWhiteSpace(_geohash) ? "xn" : _geohash;
+                    tags.Add(new NostrEventTag() { TagIdentifier = "n", Data = [botName] });
+                    tags.Add(new NostrEventTag() { TagIdentifier = "g", Data = [geohash] });
                 }
             }
             else
@@ -1105,8 +1111,10 @@ namespace kako
             }
             else if (_mode == BotMode.BitChat && _addClient)
             {
-                tags.Add(new NostrEventTag() { TagIdentifier = "n", Data = ["おもち"] });
-                tags.Add(new NostrEventTag() { TagIdentifier = "g", Data = ["xn"] });
+                var botName = string.IsNullOrWhiteSpace(_botName) ? "おもち" : _botName;
+                var geohash = string.IsNullOrWhiteSpace(_geohash) ? "xn" : _geohash;
+                tags.Add(new NostrEventTag() { TagIdentifier = "n", Data = [botName] });
+                tags.Add(new NostrEventTag() { TagIdentifier = "g", Data = [geohash] });
             }
 
             tags.Add(new NostrEventTag() { TagIdentifier = "p", Data = [_director.ConvertToHex()] });
@@ -1257,7 +1265,8 @@ namespace kako
 
             _formSetting.comboBoxMode.SelectedIndex = (int)_mode;
             _formSetting.textBoxChannelId.Text = _channelId;
-            _formSetting.textBoxChannelId.Enabled = (_mode == BotMode.Channel);
+            _formSetting.textBoxGeohash.Text = _geohash;
+            _formSetting.textBoxBotName.Text = _botName;
 
             _formSetting.textBoxDirector.Text = _director;
             _formSetting.checkBoxShowOnlyFollowees.Checked = _showOnlyFollowees;
@@ -1289,6 +1298,8 @@ namespace kako
 
             _mode = (BotMode)_formSetting.comboBoxMode.SelectedIndex;
             _channelId = _formSetting.textBoxChannelId.Text;
+            _geohash = _formSetting.textBoxGeohash.Text;
+            _botName = _formSetting.textBoxBotName.Text;
 
             _director = _formSetting.textBoxDirector.Text;
             _showOnlyFollowees = _formSetting.checkBoxShowOnlyFollowees.Checked;
@@ -1373,6 +1384,8 @@ namespace kako
 
             Setting.Mode = _mode;
             Setting.ChannelId = _channelId;
+            Setting.BotName = _botName;
+            Setting.Geohash = _geohash;
             Setting.Director = _director;
             Setting.ShowOnlyFollowees = _showOnlyFollowees;
             Setting.UsePetname = _usePetname;

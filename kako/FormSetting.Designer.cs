@@ -50,6 +50,10 @@ namespace kako
             labelMode = new Label();
             textBoxChannelId = new TextBox();
             labelChannelId = new Label();
+            labelGeohash = new Label();
+            textBoxGeohash = new TextBox();
+            labelBotName = new Label();
+            textBoxBotName = new TextBox();
             textBoxDirector = new TextBox();
             label5 = new Label();
             label6 = new Label();
@@ -202,6 +206,49 @@ namespace kako
             textBoxChannelId.Size = new Size(297, 23);
             textBoxChannelId.TabIndex = 6;
             // 
+            // labelGeohash
+            // 
+            labelGeohash.AutoSize = true;
+            labelGeohash.Location = new Point(58, 119);
+            labelGeohash.Name = "labelGeohash";
+            labelGeohash.Size = new Size(53, 15);
+            labelGeohash.TabIndex = 0;
+            labelGeohash.Text = "Geohash";
+            labelGeohash.Visible = false;
+            // 
+            // textBoxGeohash
+            // 
+            textBoxGeohash.BorderStyle = BorderStyle.FixedSingle;
+            textBoxGeohash.Location = new Point(115, 116);
+            textBoxGeohash.MaxLength = 32;
+            textBoxGeohash.Name = "textBoxGeohash";
+            textBoxGeohash.PlaceholderText = "xn";
+            textBoxGeohash.Size = new Size(65, 23);
+            textBoxGeohash.TabIndex = 6;
+            textBoxGeohash.Visible = false;
+            // 
+            // labelBotName
+            // 
+            labelBotName.AutoSize = true;
+            labelBotName.Location = new Point(187, 119);
+            labelBotName.Name = "labelBotName";
+            labelBotName.Size = new Size(58, 15);
+            labelBotName.TabIndex = 0;
+            labelBotName.Text = "Bot name";
+            labelBotName.Visible = false;
+            // 
+            // textBoxBotName
+            // 
+            textBoxBotName.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            textBoxBotName.BorderStyle = BorderStyle.FixedSingle;
+            textBoxBotName.Location = new Point(248, 116);
+            textBoxBotName.MaxLength = 64;
+            textBoxBotName.Name = "textBoxBotName";
+            textBoxBotName.PlaceholderText = "おもち";
+            textBoxBotName.Size = new Size(164, 23);
+            textBoxBotName.TabIndex = 7;
+            textBoxBotName.Visible = false;
+            // 
             // checkBoxShowOnlyFollowees
             // 
             checkBoxShowOnlyFollowees.AutoSize = true;
@@ -230,7 +277,7 @@ namespace kako
             linkLabelVersion.Size = new Size(37, 15);
             linkLabelVersion.TabIndex = 23;
             linkLabelVersion.TabStop = true;
-            linkLabelVersion.Text = "v0.4.4";
+            linkLabelVersion.Text = "v0.5.0";
             linkLabelVersion.LinkClicked += LinkLabelVersion_LinkClicked;
             // 
             // checkBoxMinimizeToTray
@@ -456,6 +503,10 @@ namespace kako
             AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
             ClientSize = new Size(424, 460);
+            Controls.Add(textBoxBotName);
+            Controls.Add(labelBotName);
+            Controls.Add(textBoxGeohash);
+            Controls.Add(labelGeohash);
             Controls.Add(textBoxChannelId);
             Controls.Add(labelChannelId);
             Controls.Add(comboBoxMode);
@@ -528,6 +579,10 @@ namespace kako
         private Label labelMode;
         internal TextBox textBoxChannelId;
         private Label labelChannelId;
+        internal Label labelGeohash;
+        internal TextBox textBoxGeohash;
+        internal Label labelBotName;
+        internal TextBox textBoxBotName;
         internal CheckBox checkBoxShowOnlyFollowees;
         private Label label3;
         private LinkLabel linkLabelVersion;

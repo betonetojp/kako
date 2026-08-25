@@ -28,12 +28,30 @@ namespace kako
         private void FormSetting_Load(object sender, EventArgs e)
         {
             labelOpacity.Text = $"{trackBarOpacity.Value}%";
-            textBoxChannelId.Enabled = (comboBoxMode.SelectedIndex == (int)BotMode.Channel);
+            UpdateModeUI();
         }
 
         private void ComboBoxMode_SelectedIndexChanged(object? sender, EventArgs e)
         {
-            textBoxChannelId.Enabled = (comboBoxMode.SelectedIndex == (int)BotMode.Channel);
+            UpdateModeUI();
+        }
+
+        private void UpdateModeUI()
+        {
+            var isChannel = (comboBoxMode.SelectedIndex == (int)BotMode.Channel);
+            var isBitChat = (comboBoxMode.SelectedIndex == (int)BotMode.BitChat);
+
+            labelChannelId.Visible = isChannel;
+            textBoxChannelId.Visible = isChannel;
+            textBoxChannelId.Enabled = isChannel;
+
+            labelGeohash.Visible = isBitChat;
+            textBoxGeohash.Visible = isBitChat;
+            textBoxGeohash.Enabled = isBitChat;
+
+            labelBotName.Visible = isBitChat;
+            textBoxBotName.Visible = isBitChat;
+            textBoxBotName.Enabled = isBitChat;
         }
 
         private void FormSetting_Shown(object sender, EventArgs e)
