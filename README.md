@@ -17,7 +17,7 @@ Tiny nostr summary bot client for windows.
 ### 1. Gemini 設定 (F5キー)
 F5キーを押して AI 設定画面を開きます。
 - **Gemini API Key**: [Google AI Studio](https://aistudio.google.com/) で取得した API キーを入力してください。
-- **Model**: 使用する Gemini モデル名を入力してください（推奨: `gemini-3.1-flash-lite`）。
+- **Model**: 使用する Gemini モデル名を入力してください（例: `gemini-2.5-flash`, `gemini-3.1-flash-lite` など）。
   - ※ **未設定（空欄）の場合は AI 機能が動作しません。**
 - **Initial prompt**: AI の初期化時に送信されるプロンプトです（ペルソナや基本ルールを設定）。
 - **Prompt for every message**: 定期要約時にタイムライン内容の先頭に付加される指示文面です。
@@ -30,7 +30,7 @@ ESCキーを押して設定画面を開きます。
 - **Mode**: 動作モードを選択します（`Note (Kind 1)` / `Channel (Kind 42)` / `BitChat (Kind 20000)`）。
 - **Channel ID**: Channel モード選択時に対象チャンネルのイベントIDを入力します（`note1...`, `nevent1...`, または 64桁 hex）。
 - **Geohash**: BitChat モード選択時に対象地域の Geohash コードを入力します（`g` タグ、初期値: `xn`）。
-- **Bot name**: BitChat モード選択時に Bot の表示名/ニックネームを入力します（`n` タグ、初期値: `おもち`）。
+- **Bot name**: BitChat モード選択時に Bot の表示名/ニックネームを入力します（`n` タグ、初期値: `まとめbot`）。
 - **Director's npub**: 返信先（マスター/管理者）の npub を入力します。
 - **Private key**: Bot の Nostr 秘密鍵（`nsec1...`）を入力します。
 - **Show only followees**: 有効にすると、返信先（Director）がフォローしているユーザーのみのイベントを取得します。

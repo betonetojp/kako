@@ -51,7 +51,7 @@ namespace kako
 
         private BotMode _mode = BotMode.Note;
         private string _channelId = string.Empty;
-        private string _botName = "おもち";
+        private string _botName = "まとめbot";
         private string _geohash = "xn";
 
         private string _director = string.Empty;
@@ -990,7 +990,7 @@ namespace kako
                 }
                 if (_addClient)
                 {
-                    var botName = string.IsNullOrWhiteSpace(_botName) ? "おもち" : _botName;
+                    var botName = string.IsNullOrWhiteSpace(_botName) ? "まとめbot" : _botName;
                     var geohash = string.IsNullOrWhiteSpace(_geohash) ? "xn" : _geohash;
                     tags.Add(new NostrEventTag() { TagIdentifier = "n", Data = [botName] });
                     tags.Add(new NostrEventTag() { TagIdentifier = "g", Data = [geohash] });
@@ -1111,7 +1111,7 @@ namespace kako
             }
             else if (_mode == BotMode.BitChat && _addClient)
             {
-                var botName = string.IsNullOrWhiteSpace(_botName) ? "おもち" : _botName;
+                var botName = string.IsNullOrWhiteSpace(_botName) ? "まとめbot" : _botName;
                 var geohash = string.IsNullOrWhiteSpace(_geohash) ? "xn" : _geohash;
                 tags.Add(new NostrEventTag() { TagIdentifier = "n", Data = [botName] });
                 tags.Add(new NostrEventTag() { TagIdentifier = "g", Data = [geohash] });

@@ -39,7 +39,7 @@ namespace kako
 
             public BotMode Mode { get; set; } = BotMode.Note;
             public string ChannelId { get; set; } = string.Empty;
-            public string BotName { get; set; } = "おもち";
+            public string BotName { get; set; } = "まとめbot";
             public string Geohash { get; set; } = "xn";
 
             public bool TopMost { get; set; } = false;

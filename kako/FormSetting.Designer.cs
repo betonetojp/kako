@@ -244,7 +244,7 @@ namespace kako
             textBoxBotName.Location = new Point(248, 116);
             textBoxBotName.MaxLength = 64;
             textBoxBotName.Name = "textBoxBotName";
-            textBoxBotName.PlaceholderText = "おもち";
+            textBoxBotName.PlaceholderText = "まとめbot";
             textBoxBotName.Size = new Size(164, 23);
             textBoxBotName.TabIndex = 7;
             textBoxBotName.Visible = false;
