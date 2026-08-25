@@ -448,10 +448,10 @@ namespace kako
                                     var replyTags = nostrEvent.GetTaggedData("p");
                                     if (replyTags != null && 0 < replyTags.Length)
                                     {
-                                        // 返信先の公開鍵を取得
-                                        string replyTo = replyTags[0];
+                                        // 返信先の公開鍵を取得（投稿者自身を除外した先頭）
+                                        string? replyTo = replyTags.FirstOrDefault(pk => pk != nostrEvent.PublicKey);
                                         // 返信先が自分の時
-                                        if (replyTo.Equals(_npubHex))
+                                        if (replyTo != null && replyTo.Equals(_npubHex))
                                         {
                                             // リセットコマンド
                                             if (content == "reset")
@@ -595,14 +595,14 @@ namespace kako
                                     }
                                     else
                                     {
-                                        // 返信の時
+                                        // 返信の時（pタグが4個以上の多人数巻き込み・ヘルスレッドは除外）
                                         var replyTags = nostrEvent.GetTaggedData("p");
-                                        if (replyTags != null && 0 < replyTags.Length)
+                                        if (replyTags != null && 0 < replyTags.Length && replyTags.Length <= 3)
                                         {
-                                            // 返信先の公開鍵を取得
-                                            string replyTo = replyTags[0];
+                                            // 返信先の公開鍵を取得（投稿者自身を除外した先頭）
+                                            string? replyTo = replyTags.FirstOrDefault(pk => pk != nostrEvent.PublicKey);
                                             // 返信先が自分の時
-                                            if (replyTo.Equals(_npubHex))
+                                            if (replyTo != null && replyTo.Equals(_npubHex))
                                             {
                                                 if (_alreadyPostedBreakMessage)
                                                 {
