@@ -66,7 +66,6 @@ namespace kako
             // 
             // textBoxApiKey
             // 
-            textBoxApiKey.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             textBoxApiKey.BorderStyle = BorderStyle.FixedSingle;
             textBoxApiKey.Location = new Point(12, 34);
             textBoxApiKey.Name = "textBoxApiKey";
@@ -238,7 +237,7 @@ namespace kako
             // 
             // label6
             // 
-            label6.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            label6.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             label6.AutoSize = true;
             label6.Location = new Point(402, 211);
             label6.Name = "label6";
@@ -260,7 +259,7 @@ namespace kako
             // 
             // label8
             // 
-            label8.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            label8.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             label8.AutoSize = true;
             label8.Location = new Point(402, 283);
             label8.Name = "label8";
