@@ -66,6 +66,7 @@ namespace kako
         private List<string> _forceCommands = [];
         private List<string> _callCommands = [];
         private bool _openMode;
+        private bool _reactToZaps = true;
         private int _callReplyLimit;
         private bool _appendUserId = true;
 
@@ -185,6 +186,7 @@ namespace kako
             _forceCommands = Setting.ForceCommands;
             _callCommands = Setting.CallCommands;
             _openMode = Setting.OpenMode;
+            _reactToZaps = Setting.ReactToZaps;
             _callReplyLimit = Setting.CallReplyLimit;
             _appendUserId = Setting.AppendUserId;
 
@@ -232,7 +234,7 @@ namespace kako
                         break;
                 }
 
-                await NostrAccess.SubscribeAsync(_mode, _channelId.ConvertEventIdToHex());
+                await NostrAccess.SubscribeAsync(_mode, _channelId.ConvertEventIdToHex(), _npubHex);
 
                 buttonStart.Enabled = false;
                 buttonStop.Enabled = true;
@@ -390,6 +392,12 @@ namespace kako
                         continue;
                     }
 
+                    if (nostrEvent.Kind == 9735)
+                    {
+                        await HandleIncomingZapAsync(nostrEvent);
+                        continue;
+                    }
+
                     //var content = nostrEvent.Content;
                     // 500文字以上は切り捨て
                     var content = nostrEvent.Content?.Substring(0, Math.Min(500, nostrEvent.Content.Length));
@@ -485,9 +493,71 @@ namespace kako
                                 continue;
                             }
 
+                            // 先にタイムラインへ表示してからコマンド／返信に反応する
+                            await NostrAccess.SubscribeProfilesAsync([nostrEvent.PublicKey]);
+                            FetchProfileIfNeeded(nostrEvent.PublicKey);
+
+                            if (_mode == BotMode.BitChat)
+                            {
+                                var n = nostrEvent.GetTaggedData("n");
+                                if (n != null && 0 < n.Length && !string.IsNullOrEmpty(n[0]))
+                                {
+                                    userName = n[0];
+                                }
+                            }
+                            if (string.IsNullOrEmpty(userName))
+                            {
+                                userName = GetUserName(nostrEvent.PublicKey);
+                                if (userName == "???" && nostrEvent.PublicKey.Length >= 8)
+                                {
+                                    userName = nostrEvent.PublicKey[..8];
+                                }
+                            }
+
+                            bool isReply = false;
+                            var e = nostrEvent.GetTaggedData("e");
+                            var p = nostrEvent.GetTaggedData("p");
+                            var q = nostrEvent.GetTaggedData("q");
+                            if (e != null && 0 < e.Length ||
+                                p != null && 0 < p.Length ||
+                                q != null && 0 < q.Length)
+                            {
+                                isReply = true;
+
+                                if (p != null && 0 < p.Length)
+                                {
+                                    string mentionedUserNames = string.Empty;
+                                    foreach (var u in p)
+                                    {
+                                        mentionedUserNames = $"{mentionedUserNames} {GetUserName(u)}";
+                                    }
+                                    editedContent = $"［💬{mentionedUserNames}］\r\n{editedContent}";
+                                }
+                            }
+
+                            DateTimeOffset dto = nostrEvent.CreatedAt ?? DateTimeOffset.Now;
+                            dataGridViewNotes.Rows.Insert(
+                                0,
+                                dto.ToLocalTime(),
+                                new Bitmap(1, 1),
+                                $"{headMark} {userName}",
+                                editedContent,
+                                nostrEvent.Id,
+                                nostrEvent.PublicKey,
+                                nostrEvent.Kind
+                                );
+
+                            if (isReply)
+                            {
+                                dataGridViewNotes.Rows[0].DefaultCellStyle.BackColor = Tools.HexToColor(Setting.ReplyColor);
+                            }
+
+                            EditRow(nostrEvent, userName);
+                            Debug.WriteLine($"{userName}: {content.Replace('\n', ' ')}");
+
                             string whoToNotify = string.Empty;
 
-                            // オーナーコマンド
+                            // オーナーコマンド・呼出・返信
                             try
                             {
                                 whoToNotify = _director.ConvertToHex();
@@ -719,78 +789,6 @@ namespace kako
                                 continue;
                             }
 
-                            // プロフィール購読（通常リレー＋インデクサリレー）
-                            await NostrAccess.SubscribeProfilesAsync([nostrEvent.PublicKey]);
-                            FetchProfileIfNeeded(nostrEvent.PublicKey);
-
-                            // ユーザー表示名取得
-                            if (_mode == BotMode.BitChat)
-                            {
-                                var n = nostrEvent.GetTaggedData("n");
-                                if (n != null && 0 < n.Length && !string.IsNullOrEmpty(n[0]))
-                                {
-                                    userName = n[0];
-                                }
-                            }
-                            if (string.IsNullOrEmpty(userName))
-                            {
-                                userName = GetUserName(nostrEvent.PublicKey);
-                                if (userName == "???" && nostrEvent.PublicKey.Length >= 8)
-                                {
-                                    userName = nostrEvent.PublicKey[..8];
-                                }
-                            }
-
-                            bool isReply = false;
-                            var e = nostrEvent.GetTaggedData("e");
-                            var p = nostrEvent.GetTaggedData("p");
-                            var q = nostrEvent.GetTaggedData("q");
-                            if (e != null && 0 < e.Length ||
-                                p != null && 0 < p.Length ||
-                                q != null && 0 < q.Length)
-                            {
-                                isReply = true;
-                                //headMark = "<";
-
-                                if (p != null && 0 < p.Length)
-                                {
-                                    string mentionedUserNames = string.Empty;
-                                    foreach (var u in p)
-                                    {
-                                        mentionedUserNames = $"{mentionedUserNames} {GetUserName(u)}";
-                                    }
-                                    editedContent = $"［💬{mentionedUserNames}］\r\n{editedContent}";
-                                }
-                            }
-
-                            // グリッドに表示
-                            //_noteEvents.AddFirst(nostrEvent);
-                            DateTimeOffset dto = nostrEvent.CreatedAt ?? DateTimeOffset.Now;
-                            dataGridViewNotes.Rows.Insert(
-                                0,
-                                dto.ToLocalTime(),
-                                new Bitmap(1, 1),
-                                $"{headMark} {userName}",
-                                //nostrEvent.Content,
-                                editedContent,
-                                nostrEvent.Id,
-                                nostrEvent.PublicKey,
-                                nostrEvent.Kind
-                                );
-                            //dataGridViewNotes.Sort(dataGridViewNotes.Columns["time"], ListSortDirection.Descending);
-
-                            // リプライの時は背景色変更
-                            if (isReply)
-                            {
-                                dataGridViewNotes.Rows[0].DefaultCellStyle.BackColor = Tools.HexToColor(Setting.ReplyColor);
-                            }
-
-                            // 行を装飾
-                            EditRow(nostrEvent, userName);
-
-                            // 改行をスペースに置き換えてログ表示
-                            Debug.WriteLine($"{userName}: {content.Replace('\n', ' ')}");
-
                             // 受信投稿数によるまとめ投稿
                             if (_summarizeByEventCount && dataGridViewNotes.Rows.Count >= _eventThreshold)
                             {
@@ -805,6 +803,150 @@ namespace kako
         }
         #endregion
 
+        #region Zap受信
+        private async Task HandleIncomingZapAsync(NostrEvent nostrEvent)
+        {
+            if (string.IsNullOrEmpty(_npubHex) ||
+                !Tools.TryParseZapReceipt(nostrEvent, _npubHex, out var zap) ||
+                string.IsNullOrEmpty(zap.SenderPubkey))
+            {
+                return;
+            }
+
+            if (IsMuted(zap.SenderPubkey))
+            {
+                return;
+            }
+
+            await NostrAccess.SubscribeProfilesAsync([zap.SenderPubkey]);
+            FetchProfileIfNeeded(zap.SenderPubkey);
+
+            string userName = GetUserName(zap.SenderPubkey);
+            if (userName == "???" && zap.SenderPubkey.Length >= 8)
+            {
+                userName = zap.SenderPubkey[..8];
+            }
+
+            string headMark = _followeesHexs.Contains(zap.SenderPubkey) ? "*" : "-";
+            string displayContent = zap.AmountSats > 0 ? $"⚡ {zap.AmountSats} sats" : "⚡ Zap";
+            if (!string.IsNullOrWhiteSpace(zap.Comment))
+            {
+                displayContent += $"\r\n{zap.Comment}";
+            }
+
+            DateTimeOffset dto = nostrEvent.CreatedAt ?? DateTimeOffset.Now;
+            void AddZapRow()
+            {
+                dataGridViewNotes.Rows.Insert(
+                    0,
+                    dto.ToLocalTime(),
+                    new Bitmap(1, 1),
+                    $"{headMark} {userName}",
+                    displayContent,
+                    nostrEvent.Id,
+                    zap.SenderPubkey,
+                    nostrEvent.Kind
+                );
+                dataGridViewNotes.Rows[0].DefaultCellStyle.BackColor = Tools.HexToColor(Setting.ReactionColor);
+
+                var displayEvent = new NostrEvent
+                {
+                    Id = nostrEvent.Id,
+                    PublicKey = zap.SenderPubkey,
+                    Content = displayContent,
+                    Kind = 9735,
+                    CreatedAt = nostrEvent.CreatedAt,
+                    Tags = nostrEvent.Tags
+                };
+                EditRow(displayEvent, userName);
+            }
+            if (dataGridViewNotes.IsHandleCreated && dataGridViewNotes.InvokeRequired)
+            {
+                dataGridViewNotes.Invoke(AddZapRow);
+            }
+            else
+            {
+                AddZapRow();
+            }
+
+            Debug.WriteLine($"Zap from {userName}: {displayContent.Replace('\n', ' ')}");
+
+            if (!_reactToZaps || zap.SenderPubkey == _npubHex)
+            {
+                return;
+            }
+
+            // プロフィールZap（eタグなし）や、自モード以外の投稿へのZapには反応しない
+            // nokakoi 等は LNURL 互換のため Zap Request から k を落とすので、無いときはリレーから取得する
+            int modeKind = _mode switch
+            {
+                BotMode.Channel => 42,
+                BotMode.BitChat => 20000,
+                _ => 1
+            };
+            if (string.IsNullOrEmpty(zap.TargetEventId))
+            {
+                Debug.WriteLine("Zap ignored for reply (profile zap / no e tag)");
+                return;
+            }
+
+            int? targetKind = zap.TargetKind;
+            if (targetKind == null)
+            {
+                targetKind = await NostrAccess.FetchEventKindAsync(zap.TargetEventId);
+                Debug.WriteLine($"Zap target kind fetched: {targetKind}");
+            }
+            if (targetKind == null || targetKind != modeKind)
+            {
+                Debug.WriteLine($"Zap ignored for reply (targetEvent={zap.TargetEventId}, targetKind={targetKind}, modeKind={modeKind})");
+                return;
+            }
+
+            string answer = string.Empty;
+            if (!_isSummarizing)
+            {
+                string promptForZap = string.Empty;
+                _formAI.Invoke((MethodInvoker)(() => promptForZap = _formAI.textBoxPromptForZap.Text));
+                if (string.IsNullOrWhiteSpace(promptForZap))
+                {
+                    promptForZap = Tools.LoadAISettings().PromptForZap;
+                }
+                var authorWithId = GetAuthorNameWithId(zap.SenderPubkey);
+                var amountText = zap.AmountSats > 0 ? $" {zap.AmountSats} sats の" : string.Empty;
+                var commentText = string.IsNullOrWhiteSpace(zap.Comment)
+                    ? "コメントはありません。"
+                    : $"コメント: {zap.Comment}";
+                var message =
+                    promptForZap + "\r\n" +
+                    authorWithId + "さんから" + amountText + "Zapを受け取りました。\r\n" +
+                    commentText + "\r\n" +
+                    "お礼の返答をしてください。";
+                bool success = await _formAI.SendMessageAsync(message);
+                if (success)
+                {
+                    await Task.Delay(1000);
+                    _formAI.Invoke((MethodInvoker)(() => answer = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n')));
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(answer))
+            {
+                answer = zap.AmountSats > 0
+                    ? $"⚡ {zap.AmountSats} sats ありがとう！"
+                    : "⚡ ありがとう！";
+            }
+
+            var rootEvent = new NostrEvent
+            {
+                Id = zap.TargetEventId,
+                PublicKey = zap.SenderPubkey,
+                Kind = modeKind
+            };
+
+            await PostAsync(answer, rootEvent);
+        }
+        #endregion
+
         #region グリッド行装飾
         private void EditRow(NostrEvent nostrEvent, string userName)
         {
@@ -814,8 +956,11 @@ namespace kako
             dataGridViewNotes.Rows[0].Cells["note"].ToolTipText = nostrEvent.Content;
 
             // avastar列の背景色をpubkeyColorに変更
-            var pubkeyColor = Tools.HexToColor(nostrEvent.PublicKey[..6]); // [i..j] で「i番目からj番目の範囲」
-            dataGridViewNotes.Rows[0].Cells["avatar"].Style.BackColor = pubkeyColor;
+            if (!string.IsNullOrEmpty(nostrEvent.PublicKey) && nostrEvent.PublicKey.Length >= 6)
+            {
+                var pubkeyColor = Tools.HexToColor(nostrEvent.PublicKey[..6]); // [i..j] で「i番目からj番目の範囲」
+                dataGridViewNotes.Rows[0].Cells["avatar"].Style.BackColor = pubkeyColor;
+            }
 
             // クライアントタグによる背景色変更
             var userClient = nostrEvent.GetTaggedData("client");
@@ -989,7 +1134,7 @@ namespace kako
         /// 投稿処理
         /// </summary>
         /// <returns></returns>
-        private async Task PostAsync(string content, NostrEvent? rootEvent = null, bool isQuote = false)
+        private async Task PostAsync(string content, NostrEvent? rootEvent = null, bool isQuote = false, string? extraMentionHex = null)
         {
             if (string.IsNullOrWhiteSpace(content))
             {
@@ -1094,6 +1239,12 @@ namespace kako
                         tags.Add(new NostrEventTag() { TagIdentifier = "p", Data = [rootEvent.PublicKey] });
                     }
                 }
+            }
+
+            if (!string.IsNullOrEmpty(extraMentionHex) &&
+                !tags.Any(t => t.TagIdentifier == "p" && t.Data != null && t.Data.Count > 0 && t.Data[0] == extraMentionHex))
+            {
+                tags.Add(new NostrEventTag() { TagIdentifier = "p", Data = [extraMentionHex] });
             }
 
             if (_addClient)
@@ -1330,6 +1481,7 @@ namespace kako
             _formSetting.textBoxForceCommands.Text = string.Join("\r\n", _forceCommands);
             _formSetting.textBoxCallCommands.Text = string.Join("\r\n", _callCommands);
             _formSetting.checkBoxOpenMode.Checked = _openMode;
+            _formSetting.checkBoxReactToZaps.Checked = _reactToZaps;
             _formSetting.numericUpDownCallReplyLimit.Value = _callReplyLimit;
 
             _formSetting.textBoxNsec.Text = _nsec;
@@ -1363,11 +1515,6 @@ namespace kako
                 LatestCreatedAt = DateTimeOffset.MinValue;
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
-
-                if (NostrAccess.Clients != null)
-                {
-                    await NostrAccess.SubscribeAsync(_mode, _channelId.ConvertEventIdToHex());
-                }
             }
 
             _director = _formSetting.textBoxDirector.Text;
@@ -1382,6 +1529,7 @@ namespace kako
             _forceCommands = [.. _formSetting.textBoxForceCommands.Text.Split(["\r\n"], StringSplitOptions.RemoveEmptyEntries)];
             _callCommands = [.. _formSetting.textBoxCallCommands.Text.Split(["\r\n"], StringSplitOptions.RemoveEmptyEntries)];
             _openMode = _formSetting.checkBoxOpenMode.Checked;
+            _reactToZaps = _formSetting.checkBoxReactToZaps.Checked;
             _callReplyLimit = (int)_formSetting.numericUpDownCallReplyLimit.Value;
 
             _nsec = _formSetting.textBoxNsec.Text;
@@ -1423,6 +1571,9 @@ namespace kako
                             labelRelays.Text = $"{connectCount} relays";
                             break;
                     }
+
+                    // タイムラインとZapレシートを再購読
+                    await NostrAccess.SubscribeAsync(_mode, _channelId.ConvertEventIdToHex(), _npubHex);
 
                     // フォロイーを購読をする
                     await NostrAccess.SubscribeFollowsAsync(_director.ConvertToHex());
@@ -1467,6 +1618,7 @@ namespace kako
             Setting.ForceCommands = _forceCommands;
             Setting.CallCommands = _callCommands;
             Setting.OpenMode = _openMode;
+            Setting.ReactToZaps = _reactToZaps;
             Setting.CallReplyLimit = _callReplyLimit;
             Setting.AppendUserId = _appendUserId;
 
@@ -1984,8 +2136,8 @@ namespace kako
                     {
                         break;
                     }
-                    // kindが7の時はスキップ
-                    if ((int)row.Cells["kind"].Value == 7)
+                    // kindが7（リアクション）や9735（Zapレシート）の時はスキップ
+                    if ((int)row.Cells["kind"].Value == 7 || (int)row.Cells["kind"].Value == 9735)
                     {
                         continue;
                     }
@@ -2045,7 +2197,7 @@ namespace kako
 
                 await NostrAccess.Clients.Disconnect();
                 await NostrAccess.ConnectAsync();
-                await NostrAccess.SubscribeAsync(_mode, _channelId.ConvertEventIdToHex());
+                await NostrAccess.SubscribeAsync(_mode, _channelId.ConvertEventIdToHex(), _npubHex);
 
                 // ログイン済みの時
                 if (!string.IsNullOrEmpty(_npubHex))

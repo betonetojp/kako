@@ -159,7 +159,8 @@ namespace kako
         /// </summary>
         /// <param name="mode">動作モード</param>
         /// <param name="channelHex">対象チャンネルID(hex)（Channelモード時）</param>
-        public static async Task SubscribeAsync(BotMode mode = BotMode.Note, string? channelHex = null)
+        /// <param name="zapRecipientHex">Zapレシート購読先の公開鍵hex</param>
+        public static async Task SubscribeAsync(BotMode mode = BotMode.Note, string? channelHex = null, string? zapRecipientHex = null)
         {
             if (_clients == null)
             {
@@ -189,12 +190,95 @@ namespace kako
                     break;
             }
 
+            List<NostrSubscriptionFilter> filters = [filter];
+            if (!string.IsNullOrEmpty(zapRecipientHex))
+            {
+                filters.Add(new NostrSubscriptionFilter
+                {
+                    Kinds = [9735],
+                    ReferencedPublicKeys = [zapRecipientHex],
+                    Since = DateTimeOffset.Now - _timeSpan,
+                });
+            }
+
             await _clients.CreateSubscription(
                 _subscriptionId,
-                [
-                    filter
-                ]
+                [.. filters]
             );
+        }
+        #endregion
+
+        #region イベントkind取得
+        /// <summary>
+        /// イベントIDから kind を取得する（Zap Request に k タグが無いとき用）
+        /// </summary>
+        public static async Task<int?> FetchEventKindAsync(string eventId, int timeoutMs = 3000)
+        {
+            if (_clients == null || string.IsNullOrEmpty(eventId))
+            {
+                return null;
+            }
+
+            var subId = Guid.NewGuid().ToString("N");
+            var tcs = new TaskCompletionSource<int?>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            void OnEventsReceived(object? sender, (string subscriptionId, NostrEvent[] events) args)
+            {
+                if (args.subscriptionId != subId)
+                {
+                    return;
+                }
+                foreach (var ev in args.events)
+                {
+                    if (string.Equals(ev.Id, eventId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        tcs.TrySetResult(ev.Kind);
+                        return;
+                    }
+                }
+            }
+
+            void OnEoseReceived(object? sender, string subscriptionId)
+            {
+                if (subscriptionId == subId)
+                {
+                    tcs.TrySetResult(null);
+                }
+            }
+
+            _clients.EventsReceived += OnEventsReceived;
+            _clients.EoseReceived += OnEoseReceived;
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(timeoutMs));
+            cts.Token.Register(() => tcs.TrySetResult(null));
+
+            try
+            {
+                await _clients.CreateSubscription(
+                    subId,
+                    [
+                        new NostrSubscriptionFilter
+                        {
+                            Ids = [eventId],
+                            Limit = 1
+                        }
+                    ],
+                    cts.Token
+                );
+
+                return await tcs.Task;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"FetchEventKindAsync エラー: {ex.Message}");
+                return null;
+            }
+            finally
+            {
+                _clients.EventsReceived -= OnEventsReceived;
+                _clients.EoseReceived -= OnEoseReceived;
+                _ = _clients.CloseSubscription(subId);
+            }
         }
         #endregion
 

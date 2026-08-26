@@ -37,6 +37,7 @@ F5キーを押して AI 設定画面を開きます。
 - **Initial prompt**: AI の初期化時に送信されるプロンプトです（ペルソナや基本ルールを設定）。
 - **Prompt for every message**: 定期要約時にタイムライン内容の先頭に付加される指示文面です。
 - **Prompt for reply**: リプライ応答時に付加される指示文面です。
+- **Prompt for zap**: Zap 受信時のお礼応答に付加される指示文面です。
 - **Turns**: 保持する会話履歴のターン数（往復数）です。
 - **Number of posts to load**: 要約作成時に読み込む過去投稿の最大件数です。
 - **Initialized**: AI セッションの初期化状態を示します。
@@ -48,6 +49,9 @@ ESCキーを押して設定画面を開きます。
 - **Opacity**: ウィンドウの不透明度を調整します。
 - **Minimize to system tray**: ウィンドウの閉じる（×）ボタンを押した際、終了せずにタスクトレイに格納します。
 - **Add client tag**: 投稿に `client: ["kako"]` タグを付加します。
+- **React to zaps**: 有効にすると、Bot 宛の Zap（kind:9735 レシート）を受け取ったときに AI でお礼を返します。Open mode や Stamina の対象外です。
+  - ※ **現在の Mode と同じ kind の投稿**への Zap だけに反応します（例: Note モードなら kind:1）。プロフィール Zap（`e` タグなし）や他モードの投稿への Zap はタイムライン表示のみで返信しません。Zap Request に `k` が無い場合は対象イベントをリレーから取得して判定します。
+  - ※ 受け取るには Bot のプロフィール（kind:0）に Lightning Address（`lud16`）が必要です。kako はプロフィールを投稿しないため、nokakoi 等で設定してください。
 - **Mode**: 動作モードを選択します（`Note (Kind 1)` / `Channel (Kind 42)` / `BitChat (Kind 20000)`）。
   - ※モードを切り替えて設定を閉じると、取得済み投稿一覧がクリアされ、新モードで再購読を開始します。
 - **Channel ID**: Channel モード選択時に対象チャンネルのイベントIDを入力します（`note1...`, `nevent1...`, または 64桁 hex）。

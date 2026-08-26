@@ -59,6 +59,7 @@ namespace kako
             public List<string> ForceCommands { get; set; } = [];
             public List<string> CallCommands { get; set; } = [];
             public bool OpenMode { get; set; } = false;
+            public bool? ReactToZaps { get; set; }
             public int CallReplyLimit { get; set; } = 10;
             public bool AppendUserId { get; set; } = true;
 
@@ -187,6 +188,11 @@ namespace kako
         {
             get => _data.OpenMode;
             set => _data.OpenMode = value;
+        }
+        public static bool ReactToZaps
+        {
+            get => _data.ReactToZaps ?? true;
+            set => _data.ReactToZaps = value;
         }
         public static int CallReplyLimit
         {

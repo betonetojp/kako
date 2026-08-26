@@ -23,6 +23,7 @@ namespace kako
             }
             // モード選択アイテムを追加
             comboBoxMode.Items.AddRange(["Note (Kind 1)", "Channel (Kind 42)", "BitChat (Kind 20000)"]);
+            toolTipLogOut.SetToolTip(checkBoxReactToZaps, "Bot宛のZapを受け取ったとき、AIでお礼を返します。プロフィールにLightning Addressが必要です。");
         }
 
         private void FormSetting_Load(object sender, EventArgs e)

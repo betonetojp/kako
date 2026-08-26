@@ -19,13 +19,16 @@ public abstract class BaseNostrEventTagJsonConverter<TNostrEventTag> : JsonConve
         var i = 0;
         while (reader.TokenType != JsonTokenType.EndArray)
         {
+            var raw = reader.GetString() ?? string.Empty;
             if (i == 0)
             {
-                result.TagIdentifier = StringEscaperJsonConverter.JavaScriptStringEncode(reader.GetString(), false);
+                // 生の文字列をそのまま使う。ここで Encode すると description 等の
+                // JSON 入りタグが壊れ、kind:9735 の Verify が落ちてイベントが破棄される。
+                result.TagIdentifier = raw;
             }
             else
             {
-                result.Data.Add(StringEscaperJsonConverter.JavaScriptStringEncode(reader.GetString(), false));
+                result.Data.Add(raw);
             }
 
             reader.Read();
