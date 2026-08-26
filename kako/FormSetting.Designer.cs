@@ -144,17 +144,17 @@ namespace kako
             checkBoxReactToZaps.CheckState = CheckState.Checked;
             checkBoxReactToZaps.Location = new Point(152, 62);
             checkBoxReactToZaps.Name = "checkBoxReactToZaps";
-            checkBoxReactToZaps.Size = new Size(102, 19);
+            checkBoxReactToZaps.Size = new Size(95, 19);
             checkBoxReactToZaps.TabIndex = 5;
             checkBoxReactToZaps.Text = "React to zaps";
             checkBoxReactToZaps.UseVisualStyleBackColor = true;
             // 
             // label4
             // 
-            label4.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            label4.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             label4.AutoSize = true;
             label4.ForeColor = SystemColors.GrayText;
-            label4.Location = new Point(199, 435);
+            label4.Location = new Point(239, 437);
             label4.Name = "label4";
             label4.Size = new Size(126, 15);
             label4.TabIndex = 0;
@@ -162,9 +162,9 @@ namespace kako
             // 
             // linkLabelIcons8
             // 
-            linkLabelIcons8.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            linkLabelIcons8.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             linkLabelIcons8.AutoSize = true;
-            linkLabelIcons8.Location = new Point(331, 435);
+            linkLabelIcons8.Location = new Point(371, 437);
             linkLabelIcons8.Name = "linkLabelIcons8";
             linkLabelIcons8.Size = new Size(41, 15);
             linkLabelIcons8.TabIndex = 26;
@@ -180,87 +180,6 @@ namespace kako
             labelOpacity.TabIndex = 0;
             labelOpacity.Text = "100%";
             labelOpacity.TextAlign = ContentAlignment.TopRight;
-            // 
-            // labelMode
-            // 
-            labelMode.AutoSize = true;
-            labelMode.Location = new Point(73, 90);
-            labelMode.Name = "labelMode";
-            labelMode.Size = new Size(38, 15);
-            labelMode.TabIndex = 0;
-            labelMode.Text = "Mode";
-            // 
-            // comboBoxMode
-            // 
-            comboBoxMode.DropDownStyle = ComboBoxStyle.DropDownList;
-            comboBoxMode.FormattingEnabled = true;
-            comboBoxMode.Location = new Point(115, 87);
-            comboBoxMode.Name = "comboBoxMode";
-            comboBoxMode.Size = new Size(160, 23);
-            comboBoxMode.TabIndex = 6;
-            comboBoxMode.SelectedIndexChanged += ComboBoxMode_SelectedIndexChanged;
-            // 
-            // labelChannelId
-            // 
-            labelChannelId.AutoSize = true;
-            labelChannelId.Location = new Point(41, 119);
-            labelChannelId.Name = "labelChannelId";
-            labelChannelId.Size = new Size(68, 15);
-            labelChannelId.TabIndex = 0;
-            labelChannelId.Text = "Channel ID";
-            // 
-            // textBoxChannelId
-            // 
-            textBoxChannelId.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            textBoxChannelId.BorderStyle = BorderStyle.FixedSingle;
-            textBoxChannelId.Location = new Point(115, 116);
-            textBoxChannelId.Name = "textBoxChannelId";
-            textBoxChannelId.PlaceholderText = "note1..., nevent1..., or hex";
-            textBoxChannelId.Size = new Size(297, 23);
-            textBoxChannelId.TabIndex = 7;
-            // 
-            // labelGeohash
-            // 
-            labelGeohash.AutoSize = true;
-            labelGeohash.Location = new Point(58, 119);
-            labelGeohash.Name = "labelGeohash";
-            labelGeohash.Size = new Size(53, 15);
-            labelGeohash.TabIndex = 0;
-            labelGeohash.Text = "Geohash";
-            labelGeohash.Visible = false;
-            // 
-            // textBoxGeohash
-            // 
-            textBoxGeohash.BorderStyle = BorderStyle.FixedSingle;
-            textBoxGeohash.Location = new Point(115, 116);
-            textBoxGeohash.MaxLength = 32;
-            textBoxGeohash.Name = "textBoxGeohash";
-            textBoxGeohash.PlaceholderText = "xn";
-            textBoxGeohash.Size = new Size(65, 23);
-            textBoxGeohash.TabIndex = 7;
-            textBoxGeohash.Visible = false;
-            // 
-            // labelBotName
-            // 
-            labelBotName.AutoSize = true;
-            labelBotName.Location = new Point(187, 119);
-            labelBotName.Name = "labelBotName";
-            labelBotName.Size = new Size(58, 15);
-            labelBotName.TabIndex = 0;
-            labelBotName.Text = "Bot name";
-            labelBotName.Visible = false;
-            // 
-            // textBoxBotName
-            // 
-            textBoxBotName.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            textBoxBotName.BorderStyle = BorderStyle.FixedSingle;
-            textBoxBotName.Location = new Point(248, 116);
-            textBoxBotName.MaxLength = 64;
-            textBoxBotName.Name = "textBoxBotName";
-            textBoxBotName.PlaceholderText = "まとめbot";
-            textBoxBotName.Size = new Size(164, 23);
-            textBoxBotName.TabIndex = 8;
-            textBoxBotName.Visible = false;
             // 
             // checkBoxShowOnlyFollowees
             // 
@@ -334,6 +253,87 @@ namespace kako
             toolTipLogOut.SetToolTip(buttonLogOut, "Log out");
             buttonLogOut.UseVisualStyleBackColor = true;
             buttonLogOut.Click += ButtonLogOut_Click;
+            // 
+            // comboBoxMode
+            // 
+            comboBoxMode.DropDownStyle = ComboBoxStyle.DropDownList;
+            comboBoxMode.FormattingEnabled = true;
+            comboBoxMode.Location = new Point(115, 87);
+            comboBoxMode.Name = "comboBoxMode";
+            comboBoxMode.Size = new Size(160, 23);
+            comboBoxMode.TabIndex = 6;
+            comboBoxMode.SelectedIndexChanged += ComboBoxMode_SelectedIndexChanged;
+            // 
+            // labelMode
+            // 
+            labelMode.AutoSize = true;
+            labelMode.Location = new Point(73, 90);
+            labelMode.Name = "labelMode";
+            labelMode.Size = new Size(38, 15);
+            labelMode.TabIndex = 0;
+            labelMode.Text = "Mode";
+            // 
+            // textBoxChannelId
+            // 
+            textBoxChannelId.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            textBoxChannelId.BorderStyle = BorderStyle.FixedSingle;
+            textBoxChannelId.Location = new Point(115, 116);
+            textBoxChannelId.Name = "textBoxChannelId";
+            textBoxChannelId.PlaceholderText = "note1..., nevent1..., or hex";
+            textBoxChannelId.Size = new Size(297, 23);
+            textBoxChannelId.TabIndex = 7;
+            // 
+            // labelChannelId
+            // 
+            labelChannelId.AutoSize = true;
+            labelChannelId.Location = new Point(41, 119);
+            labelChannelId.Name = "labelChannelId";
+            labelChannelId.Size = new Size(64, 15);
+            labelChannelId.TabIndex = 0;
+            labelChannelId.Text = "Channel ID";
+            // 
+            // labelGeohash
+            // 
+            labelGeohash.AutoSize = true;
+            labelGeohash.Location = new Point(58, 119);
+            labelGeohash.Name = "labelGeohash";
+            labelGeohash.Size = new Size(53, 15);
+            labelGeohash.TabIndex = 0;
+            labelGeohash.Text = "Geohash";
+            labelGeohash.Visible = false;
+            // 
+            // textBoxGeohash
+            // 
+            textBoxGeohash.BorderStyle = BorderStyle.FixedSingle;
+            textBoxGeohash.Location = new Point(115, 116);
+            textBoxGeohash.MaxLength = 32;
+            textBoxGeohash.Name = "textBoxGeohash";
+            textBoxGeohash.PlaceholderText = "xn";
+            textBoxGeohash.Size = new Size(65, 23);
+            textBoxGeohash.TabIndex = 7;
+            textBoxGeohash.Visible = false;
+            // 
+            // labelBotName
+            // 
+            labelBotName.AutoSize = true;
+            labelBotName.Location = new Point(187, 119);
+            labelBotName.Name = "labelBotName";
+            labelBotName.Size = new Size(57, 15);
+            labelBotName.TabIndex = 0;
+            labelBotName.Text = "Bot name";
+            labelBotName.Visible = false;
+            // 
+            // textBoxBotName
+            // 
+            textBoxBotName.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            textBoxBotName.BorderStyle = BorderStyle.FixedSingle;
+            textBoxBotName.Location = new Point(248, 116);
+            textBoxBotName.MaxLength = 64;
+            textBoxBotName.Name = "textBoxBotName";
+            textBoxBotName.PlaceholderText = "まとめbot";
+            textBoxBotName.Size = new Size(164, 23);
+            textBoxBotName.TabIndex = 8;
+            textBoxBotName.Visible = false;
             // 
             // textBoxDirector
             // 
@@ -515,7 +515,7 @@ namespace kako
             // 
             AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
-            ClientSize = new Size(424, 460);
+            ClientSize = new Size(424, 461);
             Controls.Add(textBoxBotName);
             Controls.Add(labelBotName);
             Controls.Add(textBoxGeohash);
