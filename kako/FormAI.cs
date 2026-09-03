@@ -9,6 +9,7 @@ namespace kako
         internal FormMain? MainForm { get; set; }
         private const string ApiKeyTarget = "kako_ApiKey";
         private GenerativeModel? _model;
+        private string _currentModelName = string.Empty;
         private ChatSession? _chat;
         internal bool IsInitialized = false;
         private ChatSessionBackUpData? _chatSessionBackUpData;
@@ -100,6 +101,7 @@ namespace kako
                 if (!IsInitialized)
                 {
                     _model = null;
+                    _currentModelName = string.Empty;
                     _chatSessionBackUpData = null;
                 }
                 InitializeModel(apiKey);
@@ -259,18 +261,51 @@ namespace kako
                 if (string.IsNullOrWhiteSpace(apiKey) || string.IsNullOrWhiteSpace(modelName))
                 {
                     _model = null;
+                    _currentModelName = string.Empty;
                     return;
                 }
 
-                _model ??= new GenerativeModel(apiKey, modelName);
-                // Use the setting from AI.json (not from UI)
-                var aiSettings = Tools.LoadAISettings();
-                _model.UseGoogleSearch = aiSettings.UseGoogleSearch;
+                if (_model == null || _currentModelName != modelName)
+                {
+                    // 既存のセッションがあれば会話履歴をバックアップして新モデルに引き継ぐ
+                    if (_chat != null)
+                    {
+                        try
+                        {
+                            _chatSessionBackUpData = _chat.CreateChatSessionBackUpData();
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"チャット履歴バックアップ失敗: {ex.Message}");
+                        }
+                    }
+
+                    _model = new GenerativeModel(apiKey, modelName);
+                    _currentModelName = modelName;
+
+                    // Use the setting from AI.json (not from UI)
+                    var aiSettings = Tools.LoadAISettings();
+                    _model.UseGoogleSearch = aiSettings.UseGoogleSearch;
+
+                    // 会話履歴があれば新モデルでセッションを復元・継続
+                    if (_chatSessionBackUpData?.History != null && _chatSessionBackUpData.History.Count > 0)
+                    {
+                        try
+                        {
+                            _chat = _model.StartChat(_chatSessionBackUpData);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"新モデルでのセッション復元失敗: {ex.Message}");
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
                 _model = null;
+                _currentModelName = string.Empty;
                 if (MainForm != null)
                 {
                     MainForm.LastCreatedAt = DateTimeOffset.MinValue;

@@ -334,8 +334,7 @@ namespace kako
 
         #region インデクサリレーからのプロフィール取得
         private static readonly Uri[] _indexerRelays = [
-            new Uri("wss://directory.yabu.me"),
-            new Uri("wss://purplepag.es")
+            new Uri("wss://directory.yabu.me")
         ];
         private static CompositeNostrClient? _indexerClients;
 
