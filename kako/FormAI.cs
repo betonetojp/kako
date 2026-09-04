@@ -400,7 +400,9 @@ namespace kako
                     SleepStartHour = oldSettings.SleepStartHour,
                     SleepEndHour = oldSettings.SleepEndHour,
                     UseGoogleSearch = oldSettings.UseGoogleSearch,
-                    CommunicationErrorMessage = oldSettings.CommunicationErrorMessage
+                    CommunicationErrorMessage = oldSettings.CommunicationErrorMessage,
+                    ZapHeader = oldSettings.ZapHeader,
+                    FallbackZapMessage = oldSettings.FallbackZapMessage
                 };
                 Tools.SaveAISettings(settings);
 
