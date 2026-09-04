@@ -209,7 +209,7 @@ namespace kako
             linkLabelVersion.Size = new Size(37, 15);
             linkLabelVersion.TabIndex = 25;
             linkLabelVersion.TabStop = true;
-            linkLabelVersion.Text = "v0.6.0";
+            linkLabelVersion.Text = "v0.6.1";
             linkLabelVersion.LinkClicked += LinkLabelVersion_LinkClicked;
             // 
             // checkBoxMinimizeToTray

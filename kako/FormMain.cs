@@ -915,7 +915,12 @@ namespace kako
                     promptForZap = aiSettings.PromptForZap;
                 }
                 var authorWithId = GetAuthorNameWithId(zap.SenderPubkey);
-                var amountText = zap.AmountSats > 0 ? $" {zap.AmountSats} sats の" : string.Empty;
+                var amountText = zap.AmountSats switch
+                {
+                    1 => " 1 sat の",
+                    > 1 => $" {zap.AmountSats} sats の",
+                    _ => string.Empty
+                };
                 var commentText = string.IsNullOrWhiteSpace(zap.Comment)
                     ? "コメントはありません。"
                     : $"コメント: {zap.Comment}";
@@ -937,9 +942,30 @@ namespace kako
                 var fallbackTemplate = aiSettings.FallbackZapMessage;
                 if (!string.IsNullOrWhiteSpace(fallbackTemplate))
                 {
-                    messageBody = zap.AmountSats > 0
-                        ? fallbackTemplate.Replace("{amount}", zap.AmountSats.ToString())
-                        : fallbackTemplate.Replace("{amount}sats", "").Replace("{amount} sats", "").Replace("{amount}", "").Trim();
+                    if (zap.AmountSats == 1)
+                    {
+                        messageBody = fallbackTemplate
+                            .Replace("{amount}sats", "1sat")
+                            .Replace("{amount} sats", "1 sat")
+                            .Replace("{amount}", "1")
+                            .Replace("{unit}", "sat");
+                    }
+                    else if (zap.AmountSats > 1)
+                    {
+                        messageBody = fallbackTemplate
+                            .Replace("{amount}", zap.AmountSats.ToString())
+                            .Replace("{unit}", "sats");
+                    }
+                    else
+                    {
+                        messageBody = fallbackTemplate
+                            .Replace("{amount}sats", "")
+                            .Replace("{amount} sats", "")
+                            .Replace("{amount}", "")
+                            .Replace("{unit}", "")
+                            .Replace("  ", " ")
+                            .Trim();
+                    }
                 }
             }
 
@@ -960,9 +986,19 @@ namespace kako
                     .Replace("{mention}", mention)
                     .Replace("{user}", userName);
 
-                if (zap.AmountSats > 0)
+                if (zap.AmountSats == 1)
                 {
-                    header = header.Replace("{amount}", zap.AmountSats.ToString());
+                    header = header
+                        .Replace("{amount}sats", "1sat")
+                        .Replace("{amount} sats", "1 sat")
+                        .Replace("{amount}", "1")
+                        .Replace("{unit}", "sat");
+                }
+                else if (zap.AmountSats > 1)
+                {
+                    header = header
+                        .Replace("{amount}", zap.AmountSats.ToString())
+                        .Replace("{unit}", "sats");
                 }
                 else
                 {
@@ -970,6 +1006,7 @@ namespace kako
                         .Replace("{amount}sats", "")
                         .Replace("{amount} sats", "")
                         .Replace("{amount}", "")
+                        .Replace("{unit}", "")
                         .Replace("  ", " ")
                         .Trim();
                 }
