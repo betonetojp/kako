@@ -546,6 +546,7 @@ namespace kako
                                 nostrEvent.PublicKey,
                                 nostrEvent.Kind
                                 );
+                            dataGridViewNotes.Rows[0].Tag = isReply;
 
                             if (isReply)
                             {
@@ -778,6 +779,7 @@ namespace kako
                                                         }
                                                     }
                                                 }
+                                                continue;
                                             }
                                         }
                                     }
