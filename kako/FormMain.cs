@@ -493,16 +493,38 @@ namespace kako
                                 continue;
                             }
 
-                            // 先にタイムラインへ表示してからコマンド／返信に反応する
-                            await NostrAccess.SubscribeProfilesAsync([nostrEvent.PublicKey]);
-                            FetchProfileIfNeeded(nostrEvent.PublicKey);
-
-                            if (_mode == BotMode.BitChat)
+                            if (_mode == BotMode.BitChat || nostrEvent.Kind == 20000)
                             {
-                                var n = nostrEvent.GetTaggedData("n");
-                                if (n != null && 0 < n.Length && !string.IsNullOrEmpty(n[0]))
+                                var nTag = nostrEvent.Tags?
+                                    .FirstOrDefault(t => t.TagIdentifier == "n" && t.Data != null && t.Data.Count > 0 && !string.IsNullOrWhiteSpace(t.Data[0]))?
+                                    .Data[0];
+                                if (!string.IsNullOrEmpty(nTag))
                                 {
-                                    userName = n[0];
+                                    userName = nTag;
+                                    lock (Users)
+                                    {
+                                        if (!Users.TryGetValue(nostrEvent.PublicKey, out var existingUser) || existingUser == null)
+                                        {
+                                            Users[nostrEvent.PublicKey] = new User
+                                            {
+                                                Name = userName,
+                                                DisplayName = userName,
+                                                LastActivity = DateTime.Now
+                                            };
+                                        }
+                                        else
+                                        {
+                                            if (_mode == BotMode.BitChat || string.IsNullOrEmpty(existingUser.DisplayName))
+                                            {
+                                                existingUser.DisplayName = userName;
+                                            }
+                                            if (string.IsNullOrEmpty(existingUser.Name))
+                                            {
+                                                existingUser.Name = userName;
+                                            }
+                                            existingUser.LastActivity = DateTime.Now;
+                                        }
+                                    }
                                 }
                             }
                             if (string.IsNullOrEmpty(userName))
@@ -513,6 +535,10 @@ namespace kako
                                     userName = nostrEvent.PublicKey[..8];
                                 }
                             }
+
+                            // 先にタイムラインへ表示してからコマンド／返信に反応する
+                            await NostrAccess.SubscribeProfilesAsync([nostrEvent.PublicKey]);
+                            FetchProfileIfNeeded(nostrEvent.PublicKey);
 
                             bool isReply = false;
                             var e = nostrEvent.GetTaggedData("e");
@@ -675,7 +701,7 @@ namespace kako
                                         }
                                         else
                                         {
-                                            var authorWithId = GetAuthorNameWithId(nostrEvent.PublicKey);
+                                            var authorWithId = GetAuthorNameWithId(nostrEvent.PublicKey, userName);
                                             bool success = await _formAI.SendMessageAsync(authorWithId + "さんからの返信：\r\n" + content);
                                             // 1秒待つ
                                             await Task.Delay(1000);
@@ -737,7 +763,7 @@ namespace kako
                                                 else
                                                 {
                                                     string promptForReply = _formAI.textBoxPromptForReply.Text;
-                                                    var authorWithId = GetAuthorNameWithId(nostrEvent.PublicKey);
+                                                    var authorWithId = GetAuthorNameWithId(nostrEvent.PublicKey, userName);
                                                     bool success = await _formAI.SendMessageAsync(promptForReply + "\r\n" + authorWithId + "さんからの返信：\r\n" + content);
                                                     // 1秒待つ
                                                     await Task.Delay(1000);
@@ -1192,6 +1218,14 @@ namespace kako
         {
             try
             {
+                if (string.IsNullOrEmpty(name) || name == "???") return;
+
+                // BitChatモード時はnタグの名前を優先するため上書きしない
+                if (_mode == BotMode.BitChat)
+                {
+                    return;
+                }
+
                 foreach (DataGridViewRow row in dataGridViewNotes.Rows)
                 {
                     if (row.Cells["pubkey"]?.Value?.ToString() == pubkey)
@@ -1836,15 +1870,20 @@ namespace kako
         /// ユーザー表示名と短縮ID（設定有効時）を取得する
         /// </summary>
         /// <param name="publicKeyHex">公開鍵HEX</param>
+        /// <param name="fallbackName">表示名のフォールバック（未登録時に使用）</param>
         /// <returns>ユーザー名 (ID:xxxxxxxx)</returns>
-        private string GetAuthorNameWithId(string publicKeyHex)
+        private string GetAuthorNameWithId(string publicKeyHex, string? fallbackName = null)
         {
             if (string.IsNullOrEmpty(publicKeyHex) || publicKeyHex.Length < 8)
             {
-                return GetUserName(publicKeyHex);
+                return !string.IsNullOrEmpty(fallbackName) ? fallbackName : GetUserName(publicKeyHex);
             }
 
             var name = GetUserName(publicKeyHex);
+            if (name == "???" && !string.IsNullOrEmpty(fallbackName))
+            {
+                name = fallbackName;
+            }
             if (name == "???")
             {
                 return publicKeyHex[..8];
@@ -2256,7 +2295,8 @@ namespace kako
                         continue;
                     }
                     notes.Append(row.Cells["time"].Value?.ToString() + "\r\n");
-                    var authorName = row.Cells["name"].Value?.ToString()?.Substring(2) ?? string.Empty;
+                    var rawName = row.Cells["name"].Value?.ToString();
+                    var authorName = !string.IsNullOrEmpty(rawName) && rawName.Length >= 2 ? rawName.Substring(2) : (rawName ?? string.Empty);
                     var pubkey = row.Cells["pubkey"].Value?.ToString();
                     if (_appendUserId && !string.IsNullOrEmpty(pubkey) && pubkey.Length >= 8)
                     {
