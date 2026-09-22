@@ -46,6 +46,11 @@ namespace kako
         /// </summary>
         internal Dictionary<string, User?> Users = [];
 
+        /// <summary>
+        /// 初回投稿を検知した未登録公開鍵の一時記録（使い捨てスパムbot対策）
+        /// </summary>
+        private readonly Dictionary<string, DateTime> _seenUnregisteredPubkeys = [];
+
         private bool _minimizeToTray;
         private bool _addClient;
 
@@ -491,6 +496,42 @@ namespace kako
                             if (_npubHex == nostrEvent.PublicKey)
                             {
                                 continue;
+                            }
+
+                            // ディレクター、フォロイー、既存登録ユーザーは初見判定を免除（信頼済み）
+                            bool isTrusted = nostrEvent.PublicKey == _director.ConvertToHex()
+                                || _followeesHexs.Contains(nostrEvent.PublicKey);
+
+                            bool isRegisteredUser;
+                            lock (Users)
+                            {
+                                isRegisteredUser = Users.ContainsKey(nostrEvent.PublicKey);
+                            }
+
+                            if (!isTrusted && !isRegisteredUser)
+                            {
+                                bool isSecondTime = false;
+                                lock (_seenUnregisteredPubkeys)
+                                {
+                                    if (_seenUnregisteredPubkeys.Remove(nostrEvent.PublicKey))
+                                    {
+                                        isSecondTime = true;
+                                    }
+                                    else
+                                    {
+                                        _seenUnregisteredPubkeys[nostrEvent.PublicKey] = DateTime.Now;
+                                        if (_seenUnregisteredPubkeys.Count > 1000)
+                                        {
+                                            CleanupSeenUnregisteredPubkeysInternal();
+                                        }
+                                    }
+                                }
+
+                                if (!isSecondTime)
+                                {
+                                    // 未登録ユーザーの初回投稿はUsersに追加せずスキップ（使い捨て秘密鍵スパムbot対策）
+                                    continue;
+                                }
                             }
 
                             if (_mode == BotMode.BitChat || nostrEvent.Kind == 20000)
@@ -1659,6 +1700,10 @@ namespace kako
             {
                 dataGridViewNotes.Rows.Clear();
                 _displayedEventIds.Clear();
+                lock (_seenUnregisteredPubkeys)
+                {
+                    _seenUnregisteredPubkeys.Clear();
+                }
                 LastCreatedAt = DateTimeOffset.MinValue;
                 LatestCreatedAt = DateTimeOffset.MinValue;
                 GC.Collect();
@@ -2365,6 +2410,12 @@ namespace kako
                 // ユーザー情報の保存
                 Tools.SaveUsers(Users);
 
+                // 未登録ユーザー初回記録のクリーンアップ
+                lock (_seenUnregisteredPubkeys)
+                {
+                    CleanupSeenUnregisteredPubkeysInternal();
+                }
+
                 // 定時まとめメンション
                 if (_summarizeEveryHour)
                 {
@@ -2405,6 +2456,19 @@ namespace kako
 
             // タイマーの再設定
             SetDailyTimer();
+        }
+
+        /// <summary>
+        /// 初回記録された未登録公開鍵のうち、一定時間（12時間）以上経過したものを削除
+        /// </summary>
+        private void CleanupSeenUnregisteredPubkeysInternal()
+        {
+            var threshold = DateTime.Now.AddHours(-12);
+            var expired = _seenUnregisteredPubkeys.Where(kv => kv.Value < threshold).Select(kv => kv.Key).ToList();
+            foreach (var k in expired)
+            {
+                _seenUnregisteredPubkeys.Remove(k);
+            }
         }
 
         // まとめ投稿
