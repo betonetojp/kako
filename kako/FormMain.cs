@@ -750,38 +750,32 @@ namespace kako
                                             if (!string.IsNullOrWhiteSpace(answer))
                                             {
                                                 await PostAsync(answer, nostrEvent);
-                                                if (success)
-                                                {
-                                                    _callReplyCount++;
-                                                }
                                             }
 
-                                            if (success && _callReplyCount >= _callReplyLimit)
+                                            if (success)
                                             {
-                                                bool breakSuccess = await _formAI.SendMessageAsync("疲れたからしばらく休むことを宣言ください。");
-                                                if (breakSuccess)
+                                                _callReplyCount++;
+                                                if (_callReplyCount >= _callReplyLimit)
                                                 {
-                                                    // 1秒待つ
-                                                    await Task.Delay(1000);
-                                                    var breakAnswer = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n');
-                                                    if (!string.IsNullOrWhiteSpace(breakAnswer))
+                                                    bool breakSuccess = await _formAI.SendMessageAsync("疲れたからしばらく休むことを宣言ください。");
+                                                    if (breakSuccess)
                                                     {
-                                                        if (_mode == BotMode.Channel)
-                                                        {
-                                                            await PostAsync(breakAnswer, nostrEvent);
-                                                        }
-                                                        else if (_openMode)
+                                                        // 1秒待つ
+                                                        await Task.Delay(1000);
+                                                        var breakAnswer = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n');
+                                                        if (!string.IsNullOrWhiteSpace(breakAnswer))
                                                         {
                                                             await PostAsync(breakAnswer);
                                                         }
-                                                        else
-                                                        {
-                                                            await PostAsync(breakAnswer, nostrEvent);
-                                                        }
                                                     }
+                                                    _alreadyPostedBreakMessage = true;
+                                                    Debug.WriteLine("スタミナが切れました。");
                                                 }
+                                            }
+                                            else
+                                            {
                                                 _alreadyPostedBreakMessage = true;
-                                                Debug.WriteLine("スタミナが切れました。");
+                                                Debug.WriteLine("AIエラーのため休止状態に入りました。");
                                             }
                                         }
                                         continue;
@@ -812,38 +806,32 @@ namespace kako
                                                     if (!string.IsNullOrWhiteSpace(answer))
                                                     {
                                                         await PostAsync(answer, nostrEvent);
-                                                        if (success)
-                                                        {
-                                                            _callReplyCount++;
-                                                        }
                                                     }
 
-                                                    if (success && _callReplyCount >= _callReplyLimit)
+                                                    if (success)
                                                     {
-                                                        bool breakSuccess = await _formAI.SendMessageAsync("疲れたからしばらく休むことを宣言ください。");
-                                                        if (breakSuccess)
+                                                        _callReplyCount++;
+                                                        if (_callReplyCount >= _callReplyLimit)
                                                         {
-                                                            // 1秒待つ
-                                                            await Task.Delay(1000);
-                                                            var breakAnswer = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n');
-                                                            if (!string.IsNullOrWhiteSpace(breakAnswer))
+                                                            bool breakSuccess = await _formAI.SendMessageAsync("疲れたからしばらく休むことを宣言ください。");
+                                                            if (breakSuccess)
                                                             {
-                                                                if (_mode == BotMode.Channel)
-                                                                {
-                                                                    await PostAsync(breakAnswer, nostrEvent);
-                                                                }
-                                                                else if (_openMode)
+                                                                // 1秒待つ
+                                                                await Task.Delay(1000);
+                                                                var breakAnswer = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n');
+                                                                if (!string.IsNullOrWhiteSpace(breakAnswer))
                                                                 {
                                                                     await PostAsync(breakAnswer);
                                                                 }
-                                                                else
-                                                                {
-                                                                    await PostAsync(breakAnswer, nostrEvent);
-                                                                }
                                                             }
+                                                            _alreadyPostedBreakMessage = true;
+                                                            Debug.WriteLine("スタミナが切れました。");
                                                         }
+                                                    }
+                                                    else
+                                                    {
                                                         _alreadyPostedBreakMessage = true;
-                                                        Debug.WriteLine("スタミナが切れました。");
+                                                        Debug.WriteLine("AIエラーのため休止状態に入りました。");
                                                     }
                                                 }
                                                 continue;
