@@ -403,9 +403,11 @@ namespace kako
                         continue;
                     }
 
-                    //var content = nostrEvent.Content;
-                    // 500文字以上は切り捨て
-                    var content = nostrEvent.Content?.Substring(0, Math.Min(500, nostrEvent.Content.Length));
+                    var rawContent = nostrEvent.Content;
+                    bool hasSteganography = Tools.HasHiddenTagChars(rawContent);
+                    var expandedRawContent = hasSteganography ? Tools.ExpandHiddenTagChars(rawContent) : rawContent;
+                    // 500文字以上は切り捨て（セクシー餃子展開後に切り詰める）
+                    var content = Tools.TruncateSafe(expandedRawContent, 500);
                     if (content != null)
                     {
                         string userName = string.Empty;
@@ -628,6 +630,11 @@ namespace kako
                             // オーナーコマンド・呼出・返信
                             try
                             {
+                                var hiddenTexts = hasSteganography ? Tools.ExtractHiddenTexts(rawContent) : [];
+                                var carrierEmoji = hasSteganography ? Tools.ExtractSteganographyCarrier(rawContent) : "🥟";
+                                bool MatchesExactCommand(string cmd) =>
+                                    content == cmd || hiddenTexts.Contains(cmd);
+
                                 whoToNotify = _director.ConvertToHex();
                                 if (nostrEvent.PublicKey == whoToNotify)
                                 {
@@ -641,7 +648,7 @@ namespace kako
                                         if (replyTo != null && replyTo.Equals(_npubHex))
                                         {
                                             // リセットコマンド
-                                            if (content == "reset")
+                                            if (MatchesExactCommand("reset"))
                                             {
                                                 await PostAsync("＊ AIをリセットしました ＊", nostrEvent);
                                                 _formAI.checkBoxInitialized.Checked = false;
@@ -652,20 +659,20 @@ namespace kako
                                                 continue;
                                             }
                                             // スタートコマンド
-                                            if (content == "start")
+                                            if (MatchesExactCommand("start"))
                                             {
                                                 await PostAsync("＊ 定期投稿を有効にしました ＊", nostrEvent);
                                                 _summarizeEveryHour = true;
                                                 continue;
                                             }
-                                            if (content == "start2")
+                                            if (MatchesExactCommand("start2"))
                                             {
                                                 await PostAsync("＊ 投稿を有効にしました ＊", nostrEvent);
                                                 _summarizeByEventCount = true;
                                                 continue;
                                             }
                                             // ストップコマンド
-                                            if (content == "stop")
+                                            if (MatchesExactCommand("stop"))
                                             {
                                                 await PostAsync("＊ 投稿を無効にしました ＊", nostrEvent);
                                                 _summarizeEveryHour = false;
@@ -674,7 +681,7 @@ namespace kako
                                             }
 
                                             // オープンコマンド
-                                            if (content == "open")
+                                            if (MatchesExactCommand("open"))
                                             {
                                                 _openMode = true;
                                                 await PostAsync("＊ 返信応答を有効にしました ＊", nostrEvent);
@@ -685,7 +692,7 @@ namespace kako
                                             }
 
                                             // クローズコマンド
-                                            if (content == "close")
+                                            if (MatchesExactCommand("close"))
                                             {
                                                 _openMode = false;
                                                 await PostAsync("＊ 返信応答を無効にしました ＊", nostrEvent);
@@ -693,7 +700,7 @@ namespace kako
                                             }
 
                                             // クリアコマンド
-                                            if (content == "clear")
+                                            if (MatchesExactCommand("clear"))
                                             {
                                                 await PostAsync("＊ イベントをクリアしました ＊", nostrEvent);
                                                 dataGridViewNotes.Rows.Clear();
@@ -705,7 +712,7 @@ namespace kako
                                     }
 
                                     // まとめコマンド
-                                    if (_forceCommands.Contains(content))
+                                    if (_forceCommands.Contains(content) || hiddenTexts.Any(h => _forceCommands.Contains(h)))
                                     {
                                         if (!_formAI.IsInitialized)
                                         {
@@ -732,8 +739,10 @@ namespace kako
 
                                 if (_openMode || nostrEvent.PublicKey == whoToNotify)
                                 {
-                                    // 呼出コマンド（前方一致判定）
-                                    var matchedCmd = _callCommands.FirstOrDefault(cmd => content.StartsWith(cmd));
+                                    // 呼出コマンド（前方一致判定・セクシー餃子内の隠しテキストも判定）
+                                    var matchedCmd = _callCommands.FirstOrDefault(cmd =>
+                                        content.StartsWith(cmd) ||
+                                        hiddenTexts.Any(h => h.StartsWith(cmd)));
                                     if (matchedCmd != null)
                                     {
                                         if (_alreadyPostedBreakMessage)
@@ -749,7 +758,8 @@ namespace kako
                                             var answer = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n');
                                             if (!string.IsNullOrWhiteSpace(answer))
                                             {
-                                                await PostAsync(answer, nostrEvent);
+                                                var replyContent = hasSteganography ? Tools.EncodeHiddenTagChars(carrierEmoji, answer) : answer;
+                                                await PostAsync(replyContent, nostrEvent);
                                             }
 
                                             if (success)
@@ -805,7 +815,8 @@ namespace kako
                                                     var answer = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n');
                                                     if (!string.IsNullOrWhiteSpace(answer))
                                                     {
-                                                        await PostAsync(answer, nostrEvent);
+                                                        var replyContent = hasSteganography ? Tools.EncodeHiddenTagChars(carrierEmoji, answer) : answer;
+                                                        await PostAsync(replyContent, nostrEvent);
                                                     }
 
                                                     if (success)
@@ -884,11 +895,14 @@ namespace kako
                 userName = zap.SenderPubkey[..8];
             }
 
+            bool zapHasSteganography = Tools.HasHiddenTagChars(zap.Comment);
+            string expandedZapComment = zapHasSteganography ? Tools.ExpandHiddenTagChars(zap.Comment) : zap.Comment;
+
             string headMark = _followeesHexs.Contains(zap.SenderPubkey) ? "*" : "-";
             string displayContent = zap.AmountSats > 0 ? $"⚡ {zap.AmountSats} sats" : "⚡ Zap";
-            if (!string.IsNullOrWhiteSpace(zap.Comment))
+            if (!string.IsNullOrWhiteSpace(expandedZapComment))
             {
-                displayContent += $"\r\n{zap.Comment}";
+                displayContent += $"\r\n{expandedZapComment}";
             }
 
             DateTimeOffset dto = nostrEvent.CreatedAt ?? DateTimeOffset.Now;
@@ -976,9 +990,9 @@ namespace kako
                     > 1 => $" {zap.AmountSats} sats の",
                     _ => string.Empty
                 };
-                var commentText = string.IsNullOrWhiteSpace(zap.Comment)
+                var commentText = string.IsNullOrWhiteSpace(expandedZapComment)
                     ? "コメントはありません。"
-                    : $"コメント: {zap.Comment}";
+                    : $"コメント: {expandedZapComment}";
                 var message =
                     promptForZap + "\r\n" +
                     authorWithId + "さんから" + amountText + "Zapを受け取りました。\r\n" +
@@ -1028,6 +1042,12 @@ namespace kako
             if (string.IsNullOrWhiteSpace(messageBody))
             {
                 return;
+            }
+
+            if (zapHasSteganography)
+            {
+                var zapCarrierEmoji = Tools.ExtractSteganographyCarrier(zap.Comment);
+                messageBody = Tools.EncodeHiddenTagChars(zapCarrierEmoji, messageBody);
             }
 
             // ヘッダー組み立て
@@ -1121,8 +1141,8 @@ namespace kako
         {
             // avatar列のToolTipに表示名を設定
             dataGridViewNotes.Rows[0].Cells["avatar"].ToolTipText = userName;
-            // note列のToolTipにcontentを設定
-            dataGridViewNotes.Rows[0].Cells["note"].ToolTipText = nostrEvent.Content;
+            // note列のToolTipにcontentを設定（セクシー餃子が含まれる場合は展開して表示）
+            dataGridViewNotes.Rows[0].Cells["note"].ToolTipText = Tools.ExpandHiddenTagChars(nostrEvent.Content);
 
             // avastar列の背景色をpubkeyColorに変更
             if (!string.IsNullOrEmpty(nostrEvent.PublicKey) && nostrEvent.PublicKey.Length >= 6)
