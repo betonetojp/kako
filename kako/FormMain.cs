@@ -111,6 +111,16 @@ namespace kako
         private int _callReplyCount = 0;
         private bool _alreadyPostedBreakMessage = false;
 
+        // 返信・呼出クールダウン管理（bot同士の無限応酬防止）
+        private const int GlobalReplyCooldownSeconds = 10;
+        private const int SameUserReplyCooldownSeconds = 30;
+        private DateTime _lastReplyPostedAt = DateTime.MinValue;
+        private readonly Dictionary<string, DateTime> _lastReplyByPubkey = [];
+        private bool _isReplying = false;
+
+        // 定時タイマーの次回基準時刻
+        private DateTime _nextBaseTrigger = DateTime.MinValue;
+
         // まとめ中
         private bool _isSummarizing = false;
         #endregion
@@ -719,10 +729,9 @@ namespace kako
                                             LastCreatedAt = DateTimeOffset.MinValue;
                                             LatestCreatedAt = DateTimeOffset.MinValue;
                                         }
-                                        bool success = await _formAI.SummarizeNotesAsync(true);
+                                        var (success, answer) = await _formAI.SummarizeNotesAsync(true);
                                         // 1秒待つ
                                         await Task.Delay(1000);
-                                        var answer = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n');
                                         if (!string.IsNullOrWhiteSpace(answer))
                                         {
                                             await PostAsync(answer, nostrEvent);
@@ -749,43 +758,50 @@ namespace kako
                                         {
                                             Debug.WriteLine("スタミナが切れています。");
                                         }
-                                        else
+                                        else if (CanReplyToUser(nostrEvent))
                                         {
-                                            var authorWithId = GetAuthorNameWithId(nostrEvent.PublicKey, userName);
-                                            bool success = await _formAI.SendMessageAsync(authorWithId + "さんからの返信：\r\n" + content);
-                                            // 1秒待つ
-                                            await Task.Delay(1000);
-                                            var answer = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n');
-                                            if (!string.IsNullOrWhiteSpace(answer))
+                                            _isReplying = true;
+                                            try
                                             {
-                                                var replyContent = hasSteganography ? Tools.EncodeHiddenTagChars(carrierEmoji, answer) : answer;
-                                                await PostAsync(replyContent, nostrEvent);
-                                            }
-
-                                            if (success)
-                                            {
-                                                _callReplyCount++;
-                                                if (_callReplyCount >= _callReplyLimit)
+                                                var authorWithId = GetAuthorNameWithId(nostrEvent.PublicKey, userName);
+                                                var (success, answer) = await _formAI.SendMessageAsync(authorWithId + "さんからの返信：\r\n" + content);
+                                                // 1秒待つ
+                                                await Task.Delay(1000);
+                                                if (!string.IsNullOrWhiteSpace(answer))
                                                 {
-                                                    bool breakSuccess = await _formAI.SendMessageAsync("疲れたからしばらく休むことを宣言ください。");
-                                                    if (breakSuccess)
+                                                    var replyContent = hasSteganography ? Tools.EncodeHiddenTagChars(carrierEmoji, answer) : answer;
+                                                    await PostAsync(replyContent, nostrEvent);
+                                                    RecordReplyPosted(nostrEvent.PublicKey);
+                                                }
+
+                                                if (success)
+                                                {
+                                                    _callReplyCount++;
+                                                    if (_callReplyCount >= _callReplyLimit)
                                                     {
-                                                        // 1秒待つ
-                                                        await Task.Delay(1000);
-                                                        var breakAnswer = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n');
-                                                        if (!string.IsNullOrWhiteSpace(breakAnswer))
+                                                        var (breakSuccess, breakAnswer) = await _formAI.SendMessageAsync("疲れたからしばらく休むことを宣言ください。");
+                                                        if (breakSuccess)
                                                         {
-                                                            await PostAsync(breakAnswer);
+                                                            // 1秒待つ
+                                                            await Task.Delay(1000);
+                                                            if (!string.IsNullOrWhiteSpace(breakAnswer))
+                                                            {
+                                                                await PostAsync(breakAnswer);
+                                                            }
                                                         }
+                                                        _alreadyPostedBreakMessage = true;
+                                                        Debug.WriteLine("スタミナが切れました。");
                                                     }
+                                                }
+                                                else
+                                                {
                                                     _alreadyPostedBreakMessage = true;
-                                                    Debug.WriteLine("スタミナが切れました。");
+                                                    Debug.WriteLine("AIエラーのため休止状態に入りました。");
                                                 }
                                             }
-                                            else
+                                            finally
                                             {
-                                                _alreadyPostedBreakMessage = true;
-                                                Debug.WriteLine("AIエラーのため休止状態に入りました。");
+                                                _isReplying = false;
                                             }
                                         }
                                         continue;
@@ -805,44 +821,51 @@ namespace kako
                                                 {
                                                     Debug.WriteLine("スタミナが切れています。");
                                                 }
-                                                else
+                                                else if (CanReplyToUser(nostrEvent))
                                                 {
-                                                    string promptForReply = _formAI.textBoxPromptForReply.Text;
-                                                    var authorWithId = GetAuthorNameWithId(nostrEvent.PublicKey, userName);
-                                                    bool success = await _formAI.SendMessageAsync(promptForReply + "\r\n" + authorWithId + "さんからの返信：\r\n" + content);
-                                                    // 1秒待つ
-                                                    await Task.Delay(1000);
-                                                    var answer = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n');
-                                                    if (!string.IsNullOrWhiteSpace(answer))
+                                                    _isReplying = true;
+                                                    try
                                                     {
-                                                        var replyContent = hasSteganography ? Tools.EncodeHiddenTagChars(carrierEmoji, answer) : answer;
-                                                        await PostAsync(replyContent, nostrEvent);
-                                                    }
-
-                                                    if (success)
-                                                    {
-                                                        _callReplyCount++;
-                                                        if (_callReplyCount >= _callReplyLimit)
+                                                        string promptForReply = _formAI.textBoxPromptForReply.Text;
+                                                        var authorWithId = GetAuthorNameWithId(nostrEvent.PublicKey, userName);
+                                                        var (success, answer) = await _formAI.SendMessageAsync(promptForReply + "\r\n" + authorWithId + "さんからの返信：\r\n" + content);
+                                                        // 1秒待つ
+                                                        await Task.Delay(1000);
+                                                        if (!string.IsNullOrWhiteSpace(answer))
                                                         {
-                                                            bool breakSuccess = await _formAI.SendMessageAsync("疲れたからしばらく休むことを宣言ください。");
-                                                            if (breakSuccess)
+                                                            var replyContent = hasSteganography ? Tools.EncodeHiddenTagChars(carrierEmoji, answer) : answer;
+                                                            await PostAsync(replyContent, nostrEvent);
+                                                            RecordReplyPosted(nostrEvent.PublicKey);
+                                                        }
+
+                                                        if (success)
+                                                        {
+                                                            _callReplyCount++;
+                                                            if (_callReplyCount >= _callReplyLimit)
                                                             {
-                                                                // 1秒待つ
-                                                                await Task.Delay(1000);
-                                                                var breakAnswer = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n');
-                                                                if (!string.IsNullOrWhiteSpace(breakAnswer))
+                                                                var (breakSuccess, breakAnswer) = await _formAI.SendMessageAsync("疲れたからしばらく休むことを宣言ください。");
+                                                                if (breakSuccess)
                                                                 {
-                                                                    await PostAsync(breakAnswer);
+                                                                    // 1秒待つ
+                                                                    await Task.Delay(1000);
+                                                                    if (!string.IsNullOrWhiteSpace(breakAnswer))
+                                                                    {
+                                                                        await PostAsync(breakAnswer);
+                                                                    }
                                                                 }
+                                                                _alreadyPostedBreakMessage = true;
+                                                                Debug.WriteLine("スタミナが切れました。");
                                                             }
+                                                        }
+                                                        else
+                                                        {
                                                             _alreadyPostedBreakMessage = true;
-                                                            Debug.WriteLine("スタミナが切れました。");
+                                                            Debug.WriteLine("AIエラーのため休止状態に入りました。");
                                                         }
                                                     }
-                                                    else
+                                                    finally
                                                     {
-                                                        _alreadyPostedBreakMessage = true;
-                                                        Debug.WriteLine("AIエラーのため休止状態に入りました。");
+                                                        _isReplying = false;
                                                     }
                                                 }
                                                 continue;
@@ -857,8 +880,12 @@ namespace kako
                                 continue;
                             }
 
-                            // 受信投稿数によるまとめ投稿
-                            if (_summarizeByEventCount && dataGridViewNotes.Rows.Count >= _eventThreshold)
+                            // 受信投稿数によるまとめ投稿（呼出・返信応答中や応答直後のクールダウン中は同時発動させない）
+                            if (_summarizeByEventCount &&
+                                !_isReplying &&
+                                !_isSummarizing &&
+                                (DateTime.Now - _lastReplyPostedAt).TotalSeconds >= GlobalReplyCooldownSeconds &&
+                                dataGridViewNotes.Rows.Count >= _eventThreshold)
                             {
                                 await SummarizeAndPostAsync();
                             }
@@ -998,11 +1025,11 @@ namespace kako
                     authorWithId + "さんから" + amountText + "Zapを受け取りました。\r\n" +
                     commentText + "\r\n" +
                     "お礼の返答をしてください。";
-                bool success = await _formAI.SendMessageAsync(message);
+                var (success, zapAnswer) = await _formAI.SendMessageAsync(message);
                 if (success)
                 {
                     await Task.Delay(1000);
-                    _formAI.Invoke((MethodInvoker)(() => messageBody = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n')));
+                    messageBody = zapAnswer;
                 }
             }
 
@@ -2316,6 +2343,11 @@ namespace kako
         #region ノート取得
         public string GetNotesContent()
         {
+            if (dataGridViewNotes.InvokeRequired)
+            {
+                return dataGridViewNotes.Invoke(new Func<string>(GetNotesContent));
+            }
+
             var notes = new StringBuilder();
             int count = 0;
             try
@@ -2376,16 +2408,71 @@ namespace kako
         #endregion
 
         #region デイリータイマー
-        // デイリータイマーの設定を毎時に変更
-        private void SetDailyTimer()
+        // デイリータイマーの設定（毎時指定分またはAI.jsonの周期・揺らぎ設定に対応）
+        private void SetDailyTimer(bool isContinuation = false)
         {
             var now = DateTime.Now;
-            var nextTrigger = new DateTime(now.Year, now.Month, now.Day, now.Hour, _summarizeMinutes, 0);
-            if (now.Minute >= _summarizeMinutes)
+            var aiSettings = Tools.LoadAISettings();
+            int intervalMinutes = aiSettings.SummarizeIntervalMinutes;
+            int jitterMinutes = Math.Max(0, aiSettings.SummarizeJitterMinutes);
+
+            DateTime nextTrigger;
+            if (intervalMinutes > 0)
             {
-                nextTrigger = nextTrigger.AddHours(1);
+                // 周期指定モード（例：120分周期 ± 揺らぎ分）
+                _nextBaseTrigger = now.AddMinutes(intervalMinutes);
+                nextTrigger = _nextBaseTrigger;
             }
+            else
+            {
+                // 毎時指定分モード（例：毎時xx分 ± 揺らぎ分）
+                if (isContinuation && _nextBaseTrigger > DateTime.MinValue)
+                {
+                    _nextBaseTrigger = _nextBaseTrigger.AddHours(1);
+                    if (_nextBaseTrigger <= now)
+                    {
+                        var candidate = new DateTime(now.Year, now.Month, now.Day, now.Hour, _summarizeMinutes, 0);
+                        if (candidate <= now)
+                        {
+                            candidate = candidate.AddHours(1);
+                        }
+                        _nextBaseTrigger = candidate;
+                    }
+                }
+                else
+                {
+                    var candidate = new DateTime(now.Year, now.Month, now.Day, now.Hour, _summarizeMinutes, 0);
+                    if (now.Minute >= _summarizeMinutes)
+                    {
+                        candidate = candidate.AddHours(1);
+                    }
+                    _nextBaseTrigger = candidate;
+                }
+                nextTrigger = _nextBaseTrigger;
+            }
+
+            if (jitterMinutes > 0)
+            {
+                int maxJitterSeconds = jitterMinutes * 60;
+                int offsetSeconds = Random.Shared.Next(-maxJitterSeconds, maxJitterSeconds + 1);
+                nextTrigger = nextTrigger.AddSeconds(offsetSeconds);
+            }
+
             TimeSpan timeToGo = nextTrigger - now;
+            if (jitterMinutes > 0)
+            {
+                if (timeToGo < TimeSpan.FromMinutes(1))
+                {
+                    timeToGo = TimeSpan.FromMinutes(1);
+                }
+            }
+            else if (timeToGo < TimeSpan.Zero)
+            {
+                timeToGo = TimeSpan.Zero;
+            }
+
+            Debug.WriteLine($"次回タイマー予定: {now + timeToGo:yyyy/MM/dd HH:mm:ss} (基準: {_nextBaseTrigger:HH:mm:ss}, 周期設定: {intervalMinutes}分, 揺らぎ: ±{jitterMinutes}分)");
+
             _dailyTimer?.Dispose();
             _dailyTimer = new System.Threading.Timer(DailyTimerCallback, null, timeToGo, Timeout.InfiniteTimeSpan);
         }
@@ -2395,6 +2482,7 @@ namespace kako
         {
             if (NostrAccess.Clients == null)
             {
+                SetDailyTimer(true);
                 return;
             }
 
@@ -2463,7 +2551,66 @@ namespace kako
             _alreadyPostedBreakMessage = false;
 
             // タイマーの再設定
-            SetDailyTimer();
+            SetDailyTimer(true);
+        }
+
+        /// <summary>
+        /// 返信・呼出に対してクールダウン中かどうかを判定する（bot同士の無限応酬防止）
+        /// </summary>
+        private bool CanReplyToUser(NostrEvent nostrEvent)
+        {
+            if (_isReplying)
+            {
+                Debug.WriteLine("返信処理中のためスキップしました。");
+                return false;
+            }
+
+            var now = DateTime.Now;
+            if ((now - _lastReplyPostedAt).TotalSeconds < GlobalReplyCooldownSeconds)
+            {
+                Debug.WriteLine("全体クールダウン中のため返信をスキップしました。");
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(nostrEvent.PublicKey))
+            {
+                lock (_lastReplyByPubkey)
+                {
+                    if (_lastReplyByPubkey.TryGetValue(nostrEvent.PublicKey, out var lastTime) &&
+                        (now - lastTime).TotalSeconds < SameUserReplyCooldownSeconds)
+                    {
+                        Debug.WriteLine($"同一相手クールダウン中（{SameUserReplyCooldownSeconds}秒）のため返信をスキップしました。");
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 返信・呼出投稿時刻を記録する
+        /// </summary>
+        private void RecordReplyPosted(string? pubkey)
+        {
+            var now = DateTime.Now;
+            _lastReplyPostedAt = now;
+            if (!string.IsNullOrEmpty(pubkey))
+            {
+                lock (_lastReplyByPubkey)
+                {
+                    _lastReplyByPubkey[pubkey] = now;
+                    if (_lastReplyByPubkey.Count > 1000)
+                    {
+                        var threshold = now.AddHours(-1);
+                        var expired = _lastReplyByPubkey.Where(kv => kv.Value < threshold).Select(kv => kv.Key).ToList();
+                        foreach (var k in expired)
+                        {
+                            _lastReplyByPubkey.Remove(k);
+                        }
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -2495,19 +2642,16 @@ namespace kako
                     LastCreatedAt = DateTimeOffset.MinValue;
                     LatestCreatedAt = DateTimeOffset.MinValue;
                 }
-                bool success = await _formAI.SummarizeNotesAsync();
+                var (success, answerText) = await _formAI.SummarizeNotesAsync();
                 if (!success)
                 {
                     return;
                 }
                 // 1秒待つ
                 await Task.Delay(1000);
-                string answerText = string.Empty;
-                Invoke((MethodInvoker)(() => answerText = _formAI.textBoxAnswer.Text.TrimEnd('\r', '\n')));
                 // 空文字列の場合は投稿しない
                 if (string.IsNullOrEmpty(answerText))
                 {
-                    _isSummarizing = false;
                     return;
                 }
                 if (string.IsNullOrEmpty(_director) || !_mentionMode)

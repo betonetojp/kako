@@ -13,6 +13,7 @@ namespace kako
         private ChatSession? _chat;
         internal bool IsInitialized = false;
         private ChatSessionBackUpData? _chatSessionBackUpData;
+        private readonly SemaphoreSlim _aiLock = new(1, 1);
 
         public FormAI()
         {
@@ -82,49 +83,99 @@ namespace kako
             }
         }
 
-        internal async Task<bool> SummarizeNotesAsync(bool force = false)
+        internal async Task<(bool Success, string Answer)> SummarizeNotesAsync(bool force = false)
         {
-            textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = string.Empty));
-
-            var settings = Tools.LoadAISettings();
-            if (!force && IsSleepTime(settings))
+            await _aiLock.WaitAsync();
+            try
             {
-                return false;
-            }
+                textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = string.Empty));
 
-            var apiKey = textBoxApiKey.Text;
-
-            bool success = false;
-
-            if (MainForm != null)
-            {
-                if (!IsInitialized)
+                var settings = Tools.LoadAISettings();
+                if (!force && IsSleepTime(settings))
                 {
-                    _model = null;
-                    _currentModelName = string.Empty;
-                    _chatSessionBackUpData = null;
-                }
-                InitializeModel(apiKey);
-                if (_model == null)
-                {
-                    return false;
+                    return (false, string.Empty);
                 }
 
-                var notesContent = MainForm.GetNotesContent();
-                if (!IsInitialized)
-                {
-                    _chat = _model.StartChat();
-                    IsInitialized = true;
+                var apiKey = textBoxApiKey.Invoke(() => textBoxApiKey.Text);
 
-                    checkBoxInitialized.Invoke((MethodInvoker)(() => checkBoxInitialized.Checked = IsInitialized));
-                    var initialPrompt = textBoxPrompt.Invoke(() => textBoxPrompt.Text);
+                bool success = false;
+                string answer = string.Empty;
+
+                if (MainForm != null)
+                {
+                    if (!IsInitialized)
+                    {
+                        _model = null;
+                        _currentModelName = string.Empty;
+                        _chatSessionBackUpData = null;
+                    }
+                    InitializeModel(apiKey);
+                    if (_model == null)
+                    {
+                        return (false, string.Empty);
+                    }
+
+                    var notesContent = MainForm.GetNotesContent();
+                    if (!IsInitialized)
+                    {
+                        _chat = _model.StartChat();
+                        IsInitialized = true;
+
+                        checkBoxInitialized.Invoke((MethodInvoker)(() => checkBoxInitialized.Checked = IsInitialized));
+                        var initialPrompt = textBoxPrompt.Invoke(() => textBoxPrompt.Text);
+
+                        if (_chat != null)
+                        {
+                            var result = new GenerateContentResponse();
+                            try
+                            {
+                                result = await _chat.GenerateContentAsync(initialPrompt);
+                                SaveAISettings();
+                                success = true;
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine(ex.Message);
+                            }
+                            finally
+                            {
+                                answer = DisplayResult(result.Text());
+                            }
+                        }
+                    }
+                    else if (_chat == null)
+                    {
+                        if (_chatSessionBackUpData != null)
+                        {
+                            _chat = _model.StartChat(_chatSessionBackUpData);
+                        }
+                        else
+                        {
+                            _chat = _model.StartChat();
+                        }
+                    }
+
+                    notesContent = textBoxPromptForEveryMessage.Invoke(() => textBoxPromptForEveryMessage.Text)
+                                 + notesContent;
 
                     if (_chat != null)
                     {
                         var result = new GenerateContentResponse();
                         try
                         {
-                            result = await _chat.GenerateContentAsync(initialPrompt);
+                            result = await _chat.GenerateContentAsync(notesContent);
+
+                            var history = _chat.History;
+                            var maxTurns = numericUpDownTurns.Invoke(() => (int)numericUpDownTurns.Value);
+                            // historyを最初の2件は保持して最新の設定ターン数をその後に追加
+                            if (history != null && history.Count > 2 + maxTurns * 2)
+                            {
+                                var firstTwo = history.Take(2).ToList(); // 最初の2件を保持
+                                var latestTen = history.Skip(history.Count - maxTurns * 2).ToList();
+                                history = firstTwo.Concat(latestTen).ToList();
+                                _chat.History = history;
+                            }
+
                             SaveAISettings();
                             success = true;
                         }
@@ -134,9 +185,37 @@ namespace kako
                         }
                         finally
                         {
-                            DisplayResult(result.Text());
+                            answer = DisplayResult(result.Text());
                         }
                     }
+                }
+                return (success, answer.TrimEnd('\r', '\n'));
+            }
+            finally
+            {
+                _aiLock.Release();
+            }
+        }
+        internal async Task<(bool Success, string Answer)> SendMessageAsync(string message)
+        {
+            await _aiLock.WaitAsync();
+            try
+            {
+                textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = string.Empty));
+
+                var apiKey = textBoxApiKey.Invoke(() => textBoxApiKey.Text);
+
+                InitializeModel(apiKey);
+                if (_model == null)
+                {
+                    return (false, string.Empty);
+                }
+
+                if (!IsInitialized)
+                {
+                    _chat = _model.StartChat();
+                    IsInitialized = true;
+                    checkBoxInitialized.Invoke((MethodInvoker)(() => checkBoxInitialized.Checked = IsInitialized));
                 }
                 else if (_chat == null)
                 {
@@ -150,22 +229,22 @@ namespace kako
                     }
                 }
 
-                notesContent = textBoxPromptForEveryMessage.Invoke(() => textBoxPromptForEveryMessage.Text)
-                             + notesContent;
-
+                bool success = false;
+                string answer = string.Empty;
                 if (_chat != null)
                 {
                     var result = new GenerateContentResponse();
                     try
                     {
-                        result = await _chat.GenerateContentAsync(notesContent);
+                        result = await _chat.GenerateContentAsync(message);
 
                         var history = _chat.History;
+                        var maxTurns = numericUpDownTurns.Invoke(() => (int)numericUpDownTurns.Value);
                         // historyを最初の2件は保持して最新の設定ターン数をその後に追加
-                        if (history != null && history.Count > 2 + (int)numericUpDownTurns.Value * 2)
+                        if (history != null && history.Count > 2 + maxTurns * 2)
                         {
                             var firstTwo = history.Take(2).ToList(); // 最初の2件を保持
-                            var latestTen = history.Skip(history.Count - (int)numericUpDownTurns.Value * 2).ToList();
+                            var latestTen = history.Skip(history.Count - maxTurns * 2).ToList();
                             history = firstTwo.Concat(latestTen).ToList();
                             _chat.History = history;
                         }
@@ -179,78 +258,20 @@ namespace kako
                     }
                     finally
                     {
-                        DisplayResult(result.Text());
+                        answer = DisplayResult(result.Text());
+                        textBoxChat.Invoke((MethodInvoker)(() =>
+                        {
+                            textBoxChat.Text = string.Empty;
+                            textBoxChat.Focus();
+                        }));
                     }
                 }
+                return (success, answer.TrimEnd('\r', '\n'));
             }
-            return success;
-        }
-        internal async Task<bool> SendMessageAsync(string message)
-        {
-            textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = string.Empty));
-
-            var apiKey = textBoxApiKey.Invoke(() => textBoxApiKey.Text);
-
-            InitializeModel(apiKey);
-            if (_model == null)
+            finally
             {
-                return false;
+                _aiLock.Release();
             }
-
-            if (!IsInitialized)
-            {
-                _chat = _model.StartChat();
-                IsInitialized = true;
-                checkBoxInitialized.Invoke((MethodInvoker)(() => checkBoxInitialized.Checked = IsInitialized));
-            }
-            else if (_chat == null)
-            {
-                if (_chatSessionBackUpData != null)
-                {
-                    _chat = _model.StartChat(_chatSessionBackUpData);
-                }
-                else
-                {
-                    _chat = _model.StartChat();
-                }
-            }
-
-            bool success = false;
-            if (_chat != null)
-            {
-                var result = new GenerateContentResponse();
-                try
-                {
-                    result = await _chat.GenerateContentAsync(message);
-
-                    var history = _chat.History;
-                    // historyを最初の2件は保持して最新の設定ターン数をその後に追加
-                    if (history != null && history.Count > 2 + (int)numericUpDownTurns.Value * 2)
-                    {
-                        var firstTwo = history.Take(2).ToList(); // 最初の2件を保持
-                        var latestTen = history.Skip(history.Count - (int)numericUpDownTurns.Value * 2).ToList();
-                        history = firstTwo.Concat(latestTen).ToList();
-                        _chat.History = history;
-                    }
-
-                    SaveAISettings();
-                    success = true;
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine(ex.Message);
-                }
-                finally
-                {
-                    DisplayResult(result.Text());
-                    textBoxChat.Invoke((MethodInvoker)(() =>
-                    {
-                        textBoxChat.Text = string.Empty;
-                        textBoxChat.Focus();
-                    }));
-                }
-            }
-            return success;
         }
 
         private void InitializeModel(string apiKey)
@@ -332,12 +353,13 @@ namespace kako
             }
         }
 
-        private void DisplayResult(string? result)
+        private string DisplayResult(string? result)
         {
             if (string.IsNullOrWhiteSpace(result))
             {
                 var settings = Tools.LoadAISettings();
-                textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = settings.CommunicationErrorMessage));
+                var errorMessage = settings.CommunicationErrorMessage ?? string.Empty;
+                textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = errorMessage));
                 //IsInitialized = false;
 
                 //checkBoxInitialized.Invoke((MethodInvoker)(() => checkBoxInitialized.Checked = IsInitialized));
@@ -346,10 +368,13 @@ namespace kako
                     MainForm.LastCreatedAt = DateTimeOffset.MinValue;
                     MainForm.LatestCreatedAt = DateTimeOffset.MinValue;
                 }
+                return errorMessage;
             }
             else
             {
-                textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = result.Replace("\n", "\r\n")));
+                var formatted = result.Replace("\n", "\r\n");
+                textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = formatted));
+                return formatted;
             }
         }
 
@@ -402,7 +427,9 @@ namespace kako
                     UseGoogleSearch = oldSettings.UseGoogleSearch,
                     CommunicationErrorMessage = oldSettings.CommunicationErrorMessage,
                     ZapHeader = oldSettings.ZapHeader,
-                    FallbackZapMessage = oldSettings.FallbackZapMessage
+                    FallbackZapMessage = oldSettings.FallbackZapMessage,
+                    SummarizeIntervalMinutes = oldSettings.SummarizeIntervalMinutes,
+                    SummarizeJitterMinutes = oldSettings.SummarizeJitterMinutes
                 };
                 Tools.SaveAISettings(settings);
 

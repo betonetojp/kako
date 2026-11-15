@@ -75,6 +75,8 @@ namespace kako
         public int SleepStartHour { get; set; } = 0;
         public int SleepEndHour { get; set; } = 0;
         public bool UseGoogleSearch { get; set; } = false;
+        public int SummarizeIntervalMinutes { get; set; } = 0;
+        public int SummarizeJitterMinutes { get; set; } = 0;
     }
 
     public static class Tools
