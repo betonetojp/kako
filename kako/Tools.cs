@@ -1,4 +1,3 @@
-using CredentialManagement;
 using GenerativeAI.Types;
 using NBitcoin.Secp256k1;
 using NNostr.Client;
@@ -600,27 +599,22 @@ namespace kako
         #region パスワード管理
         public static void SavePassword(string target, string username, string password)
         {
-            using var cred = new Credential();
-            cred.Target = target;
-            cred.Username = username;
-            cred.Password = EncryptPassword(password); // パスワードを暗号化
-            cred.Type = CredentialType.Generic;
-            cred.PersistanceType = PersistanceType.LocalComputer;
-            cred.Save();
+            WindowsCredentialStore.Save(target, username, EncryptPassword(password)); // パスワードを暗号化
         }
 
         public static string LoadPassword(string target)
         {
-            using var cred = new Credential();
-            cred.Target = target;
-            cred.Load();
-            return DecryptPassword(cred.Password); // パスワードを復号化
+            var encrypted = WindowsCredentialStore.Load(target);
+            if (string.IsNullOrEmpty(encrypted))
+            {
+                return string.Empty;
+            }
+            return DecryptPassword(encrypted); // パスワードを復号化
         }
 
         public static void DeletePassword(string target)
         {
-            var cred = new Credential { Target = target };
-            cred.Delete();
+            WindowsCredentialStore.Delete(target);
         }
 
         public static void SavePubkey(string pubkey)
@@ -642,26 +636,22 @@ namespace kako
         #region APIキー管理
         public static void SaveApiKey(string target, string apiKey)
         {
-            using var cred = new Credential();
-            cred.Target = target;
-            cred.Password = EncryptPassword(apiKey); // APIキーを暗号化
-            cred.Type = CredentialType.Generic;
-            cred.PersistanceType = PersistanceType.LocalComputer;
-            cred.Save();
+            WindowsCredentialStore.Save(target, null, EncryptPassword(apiKey)); // APIキーを暗号化
         }
 
         public static string LoadApiKey(string target)
         {
-            using var cred = new Credential();
-            cred.Target = target;
-            cred.Load();
-            return DecryptPassword(cred.Password); // APIキーを復号化
+            var encrypted = WindowsCredentialStore.Load(target);
+            if (string.IsNullOrEmpty(encrypted))
+            {
+                return string.Empty;
+            }
+            return DecryptPassword(encrypted); // APIキーを復号化
         }
 
         public static void DeleteApiKey(string target)
         {
-            var cred = new Credential { Target = target };
-            cred.Delete();
+            WindowsCredentialStore.Delete(target);
         }
         #endregion
 
@@ -859,7 +849,7 @@ namespace kako
                 if (trimmed.StartsWith("note1", StringComparison.OrdinalIgnoreCase))
                 {
                     NNostr.Client.Crypto.Bech32Engine.Decode(trimmed, out var hrp, out var data);
-                    if (hrp == "note")
+                    if (hrp == "note" && data != null)
                     {
                         return Convert.ToHexString(data).ToLowerInvariant();
                     }

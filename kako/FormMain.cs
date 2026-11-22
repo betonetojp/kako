@@ -1483,7 +1483,7 @@ namespace kako
             var newEvent = new NostrEvent()
             {
                 Kind = eventKind,
-                Content = content.Replace("\r\n", "\n"),
+                Content = content.Replace("\r\n", "\n").Replace("\r", "\n"),
                 Tags = tags
             };
 
@@ -1553,7 +1553,7 @@ namespace kako
             var newEvent = new NostrEvent()
             {
                 Kind = eventKind,
-                Content = (_addNostrNpub1 ? "nostr:" + _director + " " : "") + content.Replace("\r\n", "\n"),
+                Content = (_addNostrNpub1 ? "nostr:" + _director + " " : "") + content.Replace("\r\n", "\n").Replace("\r", "\n"),
                 Tags = tags
             };
 

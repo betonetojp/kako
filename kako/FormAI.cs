@@ -129,7 +129,7 @@ namespace kako
                             var result = new GenerateContentResponse();
                             try
                             {
-                                result = await _chat.GenerateContentAsync(initialPrompt);
+                                result = await _chat.GenerateContentAsync(NormalizeLineEndings(initialPrompt));
                                 SaveAISettings();
                                 success = true;
                             }
@@ -139,7 +139,7 @@ namespace kako
                             }
                             finally
                             {
-                                answer = DisplayResult(result.Text());
+                                answer = DisplayResult(ExtractResponseText(result));
                             }
                         }
                     }
@@ -163,7 +163,7 @@ namespace kako
                         var result = new GenerateContentResponse();
                         try
                         {
-                            result = await _chat.GenerateContentAsync(notesContent);
+                            result = await _chat.GenerateContentAsync(NormalizeLineEndings(notesContent));
 
                             var history = _chat.History;
                             var maxTurns = numericUpDownTurns.Invoke(() => (int)numericUpDownTurns.Value);
@@ -185,7 +185,7 @@ namespace kako
                         }
                         finally
                         {
-                            answer = DisplayResult(result.Text());
+                            answer = DisplayResult(ExtractResponseText(result));
                         }
                     }
                 }
@@ -236,7 +236,7 @@ namespace kako
                     var result = new GenerateContentResponse();
                     try
                     {
-                        result = await _chat.GenerateContentAsync(message);
+                        result = await _chat.GenerateContentAsync(NormalizeLineEndings(message));
 
                         var history = _chat.History;
                         var maxTurns = numericUpDownTurns.Invoke(() => (int)numericUpDownTurns.Value);
@@ -258,7 +258,7 @@ namespace kako
                     }
                     finally
                     {
-                        answer = DisplayResult(result.Text());
+                        answer = DisplayResult(ExtractResponseText(result));
                         textBoxChat.Invoke((MethodInvoker)(() =>
                         {
                             textBoxChat.Text = string.Empty;
@@ -353,13 +353,37 @@ namespace kako
             }
         }
 
+        private static string NormalizeLineEndings(string? text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return string.Empty;
+            }
+            return text.Replace("\r\n", "\n").Replace("\r", "\n");
+        }
+
+        private static string? ExtractResponseText(GenerateContentResponse? response)
+        {
+            var parts = response?.Candidates?.FirstOrDefault()?.Content?.Parts;
+            if (parts == null || parts.Count == 0)
+            {
+                return null;
+            }
+            var textParts = parts
+                .Where(p => p.Thought != true && !string.IsNullOrEmpty(p.Text))
+                .Select(p => p.Text);
+            return string.Concat(textParts);
+        }
+
         private string DisplayResult(string? result)
         {
             if (string.IsNullOrWhiteSpace(result))
             {
                 var settings = Tools.LoadAISettings();
                 var errorMessage = settings.CommunicationErrorMessage ?? string.Empty;
-                textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = errorMessage));
+                var normalizedError = NormalizeLineEndings(errorMessage);
+                var displayError = normalizedError.Replace("\n", "\r\n");
+                textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = displayError));
                 //IsInitialized = false;
 
                 //checkBoxInitialized.Invoke((MethodInvoker)(() => checkBoxInitialized.Checked = IsInitialized));
@@ -368,13 +392,14 @@ namespace kako
                     MainForm.LastCreatedAt = DateTimeOffset.MinValue;
                     MainForm.LatestCreatedAt = DateTimeOffset.MinValue;
                 }
-                return errorMessage;
+                return normalizedError;
             }
             else
             {
-                var formatted = result.Replace("\n", "\r\n");
-                textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = formatted));
-                return formatted;
+                var normalized = NormalizeLineEndings(result);
+                var displayText = normalized.Replace("\n", "\r\n");
+                textBoxAnswer.Invoke((MethodInvoker)(() => textBoxAnswer.Text = displayText));
+                return normalized;
             }
         }
 

@@ -105,9 +105,9 @@ ESCキーを押して設定画面を開きます。
 - `CommunicationErrorMessage`:
   - AI との通信に失敗した際に表示・投稿されるエラーメッセージ（空文字に設定すると失敗時の投稿を行いません）。
 - `ZapHeader`:
-  - Zap 受信時のお礼投稿の先頭に付与されるヘッダーテンプレート（デフォルト: `"⚡ {amount}sats from {mention}"`）。`{mention}`（`nostr:npub1...` またはユーザー名）、`{user}`（ユーザー名）、`{amount}`（sats 額）が置換されます。空文字に設定するとヘッダーを付与しません。
+  - Zap 受信時のお礼投稿の先頭に付与されるヘッダーテンプレート（デフォルト: `"⚡ {amount}sats from {mention}"`）。`{mention}`（`nostr:npub1...` またはユーザー名）、`{user}`（ユーザー名）、`{amount}`（sats 額）、`{unit}`（1 のとき `sat`、2 以上のとき `sats`）が置換されます。空文字に設定するとヘッダーを付与しません。
 - `FallbackZapMessage`:
-  - Zap 受信時のお礼生成に失敗した（または要約処理中などの）際に返信するフォールバックメッセージ（デフォルト: `"ありがとう！"`、`{amount}` が受信 sats 額に置換されます。空文字に設定するとフォールバック投稿を行いません）。
+  - Zap 受信時のお礼生成に失敗した（または要約処理中などの）際に返信するフォールバックメッセージ（デフォルト: `"ありがとう！"`、`{amount}`・`{unit}` が置換されます。空文字に設定するとフォールバック投稿を行いません）。
 - `SummarizeIntervalMinutes`:
   - 定期要約の基本周期（分単位、デフォルト: `0`）。`0` の場合は設定画面の「Summarize every hour at xx minutes（毎時 xx 分）」に従って動作します。`1` 以上（例: `120`）を指定すると、時計の「何分」に縛られず指定した分数周期（例: 120分おき）で動作します。
 - `SummarizeJitterMinutes`:
@@ -118,6 +118,8 @@ ESCキーを押して設定画面を開きます。
 ---
 
 ## 利用ライブラリ / NuGet パッケージ
-- [CredentialManagement](https://www.nuget.org/packages/CredentialManagement)
 - [Google_GenerativeAI](https://www.nuget.org/packages/Google_GenerativeAI)
-- [NNostr](https://github.com/Kukks/NNostr) (一部カスタマイズして同梱)
+- [NBitcoin.Secp256k1](https://www.nuget.org/packages/NBitcoin.Secp256k1)
+- [NNostr](https://github.com/Kukks/NNostr)（必要なクライアント機能のみ抜粋・カスタマイズして `kako/Nostr` に統合）
+
+※ 秘密鍵（`nsec`）や Gemini API キーは DPAPI で暗号化したうえで、Windows 標準 API（`advapi32.dll`）経由で Windows 資格情報マネージャーに保存されます。
