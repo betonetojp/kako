@@ -92,6 +92,9 @@ namespace kako
 
         // プロフィール取得中の公開鍵
         private readonly HashSet<string> _fetchingProfileHexs = [];
+        private readonly Dictionary<string, DateTime> _profileLastFetchedAt = [];
+        private static readonly TimeSpan ProfileRefreshInterval = TimeSpan.FromMinutes(30);
+        private static readonly TimeSpan ProfileRetryCooldown = TimeSpan.FromMinutes(1);
 
         // 受信イベントのリレー追跡
         private readonly Dictionary<string, List<string>> _eventSeenOn = [];
@@ -295,6 +298,7 @@ namespace kako
             if (args.subscriptionId == NostrAccess.GetFolloweesSubscriptionId)
             {
                 #region フォロイー購読
+                var followeeList = new List<string>();
                 foreach (var nostrEvent in args.events)
                 {
                     // フォローリスト
@@ -303,26 +307,33 @@ namespace kako
                         var tags = nostrEvent.Tags;
                         foreach (var tag in tags)
                         {
-                            if ("p" == tag.TagIdentifier)
+                            if ("p" == tag.TagIdentifier && tag.Data.Count > 0)
                             {
                                 // 公開鍵をハッシュに保存
-                                _followeesHexs.Add(tag.Data[0]);
-
-                                // プロフィール購読
-                                await NostrAccess.SubscribeProfilesAsync([tag.Data[0]]);
+                                if (_followeesHexs.Add(tag.Data[0]))
+                                {
+                                    followeeList.Add(tag.Data[0]);
+                                }
 
                                 // petnameをユーザー辞書に保存
                                 if (2 < tag.Data.Count)
                                 {
-                                    Users.TryGetValue(tag.Data[0], out User? user);
-                                    if (user != null)
+                                    lock (Users)
                                     {
-                                        user.PetName = tag.Data[2];
+                                        Users.TryGetValue(tag.Data[0], out User? user);
+                                        if (user != null)
+                                        {
+                                            user.PetName = tag.Data[2];
+                                        }
                                     }
                                 }
                             }
                         }
                     }
+                }
+                if (followeeList.Count > 0)
+                {
+                    await NostrAccess.SubscribeProfilesAsync([.. followeeList]);
                 }
                 #endregion
             }
@@ -590,7 +601,6 @@ namespace kako
                             }
 
                             // 先にタイムラインへ表示してからコマンド／返信に反応する
-                            await NostrAccess.SubscribeProfilesAsync([nostrEvent.PublicKey]);
                             FetchProfileIfNeeded(nostrEvent.PublicKey);
 
                             bool isReply = false;
@@ -913,7 +923,6 @@ namespace kako
                 return;
             }
 
-            await NostrAccess.SubscribeProfilesAsync([zap.SenderPubkey]);
             FetchProfileIfNeeded(zap.SenderPubkey);
 
             string userName = GetUserName(zap.SenderPubkey);
@@ -1215,37 +1224,49 @@ namespace kako
         }
         #endregion
 
-        #region プロフィール取得（インデクサ連携）
+        #region プロフィール取得（通常リレー＋インデクサ連携）
         private void FetchProfileIfNeeded(string pubkey)
         {
             if (string.IsNullOrEmpty(pubkey)) return;
 
-            // 既に有効な表示名がある場合は再取得不要
-            if (Users.TryGetValue(pubkey, out var existingUser) && existingUser != null)
-            {
-                if (!string.IsNullOrEmpty(existingUser.DisplayName) || !string.IsNullOrEmpty(existingUser.Name))
-                {
-                    return;
-                }
-            }
-
+            var now = DateTime.UtcNow;
             lock (_fetchingProfileHexs)
             {
                 if (_fetchingProfileHexs.Contains(pubkey)) return;
+
+                bool hasValidName = false;
+                lock (Users)
+                {
+                    if (Users.TryGetValue(pubkey, out var existingUser) && existingUser != null)
+                    {
+                        hasValidName = !string.IsNullOrEmpty(existingUser.DisplayName) || !string.IsNullOrEmpty(existingUser.Name);
+                    }
+                }
+
+                bool isFresh = _profileLastFetchedAt.TryGetValue(pubkey, out var lastFetched)
+                    && (now - lastFetched) < ProfileRefreshInterval;
+
+                if (hasValidName && isFresh)
+                {
+                    return;
+                }
+
                 _fetchingProfileHexs.Add(pubkey);
             }
 
             _ = Task.Run(async () =>
             {
+                bool fetched = false;
                 try
                 {
-                    var profileEvent = await NostrAccess.FetchProfileFromIndexerAsync(pubkey);
+                    var profileEvent = await NostrAccess.FetchLatestProfileAsync(pubkey);
                     if (profileEvent?.Content != null)
                     {
+                        fetched = true;
                         var newUserData = Tools.JsonToUser(profileEvent.Content, profileEvent.CreatedAt);
                         if (newUserData != null)
                         {
-                            string resolvedName = string.Empty;
+                            bool updated = false;
                             lock (Users)
                             {
                                 DateTimeOffset? createdAt = DateTimeOffset.MinValue;
@@ -1262,28 +1283,36 @@ namespace kako
                                 {
                                     newUserData.LastActivity = DateTime.Now;
                                     Users[pubkey] = newUserData;
-                                    Debug.WriteLine($"[Indexer] プロフィール取得成功: {newUserData.DisplayName} @{newUserData.Name} ({pubkey[..8]})");
+                                    updated = true;
+                                    var shortKey = pubkey.Length >= 8 ? pubkey[..8] : pubkey;
+                                    Debug.WriteLine($"[Profile] プロフィール更新: {newUserData.DisplayName} @{newUserData.Name} ({shortKey})");
                                 }
                             }
 
-                            resolvedName = GetUserName(pubkey);
-
-                            // グリッド上の名前・ツールチップを更新
-                            if (dataGridViewNotes.IsHandleCreated)
+                            if (updated)
                             {
-                                dataGridViewNotes.BeginInvoke(new Action(() => UpdateGridProfile(pubkey, resolvedName)));
+                                string resolvedName = GetUserName(pubkey);
+
+                                // グリッド上の名前・ツールチップを更新
+                                if (!IsDisposed && dataGridViewNotes.IsHandleCreated)
+                                {
+                                    dataGridViewNotes.BeginInvoke(new Action(() => UpdateGridProfile(pubkey, resolvedName)));
+                                }
                             }
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"[Indexer] プロフィール取得失敗: {ex.Message}");
+                    Debug.WriteLine($"FetchProfileIfNeeded エラー: {ex.Message}");
                 }
                 finally
                 {
                     lock (_fetchingProfileHexs)
                     {
+                        _profileLastFetchedAt[pubkey] = fetched
+                            ? DateTime.UtcNow
+                            : DateTime.UtcNow - ProfileRefreshInterval + ProfileRetryCooldown;
                         _fetchingProfileHexs.Remove(pubkey);
                     }
                 }
